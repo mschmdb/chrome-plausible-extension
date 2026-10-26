@@ -85,12 +85,27 @@
 	{#if manualFlag}
 		<Notice>
 			<p>
-				The flag on this site was set by hand, for example with the console command from the
-				Plausible docs. The extension does not manage it.
+				<strong>Flag found:</strong> <code>localStorage.plausible_ignore</code> was set by hand on
+				this site, for example with the console command from the
+				<a
+					href="https://plausible.io/docs/excluding-localstorage"
+					target="_blank"
+					rel="noopener noreferrer"
+					>Plausible docs<span class="visually-hidden"> (opens in a new tab)</span></a
+				>. The extension does not manage it yet.
+			</p>
+			<p>
+				Migrate it to let the extension take over: your visits stay ignored, and turning the site
+				off later removes the flag.
 			</p>
 			<div class="actions">
-				<button type="button" class="button" disabled={busy} onclick={() => toggleSite(true)}>
-					Manage with this extension
+				<button
+					type="button"
+					class="button primary"
+					disabled={busy}
+					onclick={() => toggleSite(true)}
+				>
+					Migrate to extension
 				</button>
 				<button
 					type="button"
@@ -98,7 +113,7 @@
 					disabled={busy}
 					onclick={() => run(() => send({ type: 'clear-flag', tabId: tab.tabId }))}
 				>
-					Remove flag
+					Delete flag
 				</button>
 			</div>
 		</Notice>
@@ -139,6 +154,14 @@
 
 	p {
 		margin: 0;
+	}
+
+	p + p {
+		margin-top: var(--space-2);
+	}
+
+	a {
+		color: var(--accent);
 	}
 
 	.button {
