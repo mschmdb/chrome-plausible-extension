@@ -5,7 +5,7 @@ import type { TabStatus } from '../../lib/tab-status';
 import { expectNoAxeViolations } from '../components/axe-helper';
 import SiteControls from './SiteControls.svelte';
 
-const tab = (overrides: Partial<TabStatus> = {}): TabStatus & { host: string } => ({
+const tab = (overrides: Partial<Omit<TabStatus, 'host'>> = {}): TabStatus & { host: string } => ({
 	tabId: 1,
 	host: 'navigator.test',
 	site: null,
@@ -19,6 +19,7 @@ const tab = (overrides: Partial<TabStatus> = {}): TabStatus & { host: string } =
 	flag: { value: 'true' },
 	detection: null,
 	eventLog: false,
+	recording: false,
 	events: [],
 	...overrides
 });

@@ -16,6 +16,7 @@ const tab = (overrides: Partial<TabStatus>): TabStatus => ({
 	flag: { value: 'true' },
 	detection: null,
 	eventLog: false,
+	recording: false,
 	events: [],
 	...overrides
 });

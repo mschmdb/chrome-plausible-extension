@@ -62,3 +62,14 @@ export async function tabHost(tabId: number): Promise<string | null> {
 		return null;
 	}
 }
+
+function probeInstalledInPage(): boolean {
+	return Boolean(
+		(window as unknown as Record<symbol, unknown>)[Symbol.for('ignore-for-plausible.probe')]
+	);
+}
+
+/** Whether the event probe runs in the tab's current page. */
+export async function hasProbe(tabId: number): Promise<boolean> {
+	return (await runInTab(tabId, probeInstalledInPage, [], 'MAIN')) === true;
+}

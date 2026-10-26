@@ -81,3 +81,16 @@ export async function loadState(): Promise<ExtensionState> {
 		flaggedOrigins
 	};
 }
+
+const RECORDING_KEY = 'recordingTabs';
+
+/** Tabs where the popup injected the probe by hand. Cleared on navigation and close. */
+export async function loadRecordingTabs(): Promise<number[]> {
+	const stored = await chrome.storage.session.get(RECORDING_KEY);
+	const raw: unknown = stored[RECORDING_KEY];
+	return Array.isArray(raw) ? raw.filter((id): id is number => Number.isInteger(id)) : [];
+}
+
+export async function saveRecordingTabs(tabIds: readonly number[]): Promise<void> {
+	await chrome.storage.session.set({ [RECORDING_KEY]: [...new Set(tabIds)] });
+}

@@ -238,3 +238,32 @@ test('imports a site list from a file', async ({ options }) => {
 		.analyze();
 	expect(results.violations.map((v) => v.id)).toEqual([]);
 });
+
+test('records events on a page that is not enabled', async ({ site, options, sw }) => {
+	await send(options, { type: 'set-event-log', enabled: false });
+	const page = await site('free.test');
+	const tabId = await sw.evaluate(
+		async (url) => (await chrome.tabs.query({ url }))[0]?.id,
+		page.url()
+	);
+
+	const before = (await send(options, { type: 'get-tab-status', tabId })) as { recording: boolean };
+	expect(before.recording).toBe(false);
+
+	await send(options, { type: 'record-tab', tabId });
+	// A second click must not install the probe twice.
+	await send(options, { type: 'record-tab', tabId });
+	await page.evaluate(() =>
+		(window as unknown as { plausible: (n: string) => void }).plausible('Explore')
+	);
+
+	await expect
+		.poll(async () => {
+			const status = (await send(options, { type: 'get-tab-status', tabId })) as {
+				recording: boolean;
+				events: { name: string | null }[];
+			};
+			return { recording: status.recording, names: status.events.map((e) => e.name) };
+		})
+		.toEqual({ recording: true, names: ['Explore'] });
+});

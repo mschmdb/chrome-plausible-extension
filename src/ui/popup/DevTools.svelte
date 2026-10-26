@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { FlaskConical, Trash } from '@lucide/svelte';
+	import { CircleDot, FlaskConical, Trash } from '@lucide/svelte';
 	import type { TabStatus } from '../../lib/tab-status';
 	import { send } from '../client';
 	import DetectionDetails from './DetectionDetails.svelte';
@@ -56,7 +56,7 @@
 		<section aria-labelledby="log-title">
 			<div class="log-head">
 				<h3 id="log-title">Event log</h3>
-				{#if tab.eventLog && tab.events.length > 0}
+				{#if tab.events.length > 0}
 					<button
 						type="button"
 						class="button"
@@ -68,14 +68,39 @@
 					</button>
 				{/if}
 			</div>
-			{#if tab.eventLog && !tab.shouldIgnore && !tab.testMode}
-				<p class="muted">The event log runs only on sites you enabled.</p>
-			{:else if tab.eventLog}
-				<EventLog events={tab.events} />
-			{:else}
+
+			<p class="muted" role="status">
+				{#if tab.recording}
+					Recording on this page. Trigger events, then reopen this popup.
+				{:else}
+					Not recording on this page.
+				{/if}
+			</p>
+
+			{#if !tab.recording}
+				<button
+					type="button"
+					class="button"
+					disabled={busy}
+					onclick={() => run(() => send({ type: 'record-tab', tabId: tab.tabId }))}
+				>
+					<CircleDot size={14} aria-hidden="true" />
+					Record events on this page
+				</button>
 				<p class="muted">
-					The event log shows what Plausible sends or skips on sites you enabled. It watches network
-					requests in the page, so it is off by default.
+					Works on any site, without extra access. Stops when the page reloads, so the pageview of
+					the next load is not recorded.
+				</p>
+			{/if}
+
+			{#if tab.events.length > 0 || tab.recording}
+				<EventLog events={tab.events} />
+			{/if}
+
+			{#if !tab.eventLog}
+				<p class="muted">
+					To record from the first pageview on, turn on the event log. It then runs on every site
+					you enabled.
 				</p>
 				<button
 					type="button"
@@ -83,7 +108,7 @@
 					disabled={busy}
 					onclick={() => run(() => send({ type: 'set-event-log', enabled: true }))}
 				>
-					Turn on event log
+					Turn on event log for enabled sites
 				</button>
 			{/if}
 		</section>

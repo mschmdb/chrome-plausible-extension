@@ -21,5 +21,7 @@ export interface TabStatus {
 	flag: FlagState | null;
 	detection: Detection | null;
 	eventLog: boolean;
+	/** The event probe runs in the current page, registered or injected from the popup. */
+	recording: boolean;
 	events: CapturedEvent[];
 }

@@ -22,7 +22,7 @@ This extension sets the flag at `document_start`, so the first pageview is skipp
   - Local installation checks: multiple scripts, CSP, blocked script, localhost, tagged-event classes
   - Flag inspector: current value next to the expected one
   - Test mode: lifts the flag on a site until you stop it or close the tab
-  - Event log: events Plausible sends or skips, with payload warnings
+  - Event log: events Plausible sends or skips, with payload warnings. Record on any open page with one click, or automatically on enabled sites
 - **Export and import** of the site list as JSON.
 - **Cleanup:** removing a site clears the flag it set, on open tabs right away and on other origins at your next visit. A flag you set by hand stays untouched until you enable that site or remove it from the popup.
 

@@ -16,7 +16,7 @@ import { addSite, findSite, removeSite, setSubdomains, type Settings } from '../
 import type { TabStatus } from '../lib/tab-status';
 import { applyBadge, inspectTab, refreshBadges } from './badge';
 import { pendingGrant, rememberGrant, takeGrantedAction } from './grants';
-import { clearFlag, pagesWhere, setFlag, tabHost } from './pages';
+import { clearFlag, hasProbe, pagesWhere, setFlag, tabHost } from './pages';
 import { reconcileRegistrations } from './registrar';
 import * as store from './store';
 
@@ -204,6 +204,7 @@ async function tabStatus(tabId: number): Promise<TabStatus> {
 		flag: inspection.flag,
 		detection: inspection.detection,
 		eventLog: state.settings.eventLog,
+		recording: await hasProbe(tabId),
 		events: await store.loadEvents(tabId)
 	};
 }
@@ -232,6 +233,8 @@ export async function handleUiRequest(request: UiRequest): Promise<unknown> {
 			return serial(() => startTest(request.tabId));
 		case 'test-stop':
 			return serial(() => stopTest(request.host));
+		case 'record-tab':
+			return serial(() => recordTab(request.tabId));
 		case 'clear-flag':
 			return serial(() => clearTabFlag(request.tabId));
 		case 'clear-events':
@@ -254,10 +257,26 @@ export async function onSettingsSynced(): Promise<void> {
 	await serial(() => settle());
 }
 
+/** Injects the probe into an open page. Uses the popup's activeTab grant, no prompt. */
+async function recordTab(tabId: number): Promise<void> {
+	try {
+		await chrome.scripting.executeScript({ target: { tabId }, files: ['content/relay.js'] });
+		await chrome.scripting.executeScript({
+			target: { tabId },
+			files: ['content/probe.js'],
+			world: 'MAIN'
+		});
+	} catch {
+		throw new Error('Chrome does not allow recording on this page.');
+	}
+	await store.saveRecordingTabs([...(await store.loadRecordingTabs()), tabId]);
+}
+
 export async function recordEvent(tabId: number, event: CapturedEvent): Promise<void> {
 	await serial(async () => {
 		const settings = await store.loadSettings();
-		if (!settings.eventLog) return;
+		const recording = await store.loadRecordingTabs();
+		if (!settings.eventLog && !recording.includes(tabId)) return;
 		await store.saveEvents(tabId, appendEvent(await store.loadEvents(tabId), boundEvent(event)));
 	});
 }
@@ -279,6 +298,9 @@ export async function finishCleanup(origin: string): Promise<void> {
 export async function onTabRemoved(tabId: number): Promise<void> {
 	await serial(async () => {
 		await store.clearEvents(tabId);
+		const recording = await store.loadRecordingTabs();
+		if (recording.includes(tabId))
+			await store.saveRecordingTabs(recording.filter((id) => id !== tabId));
 		const entries = await store.loadTestEntries();
 		const closing = entries.filter((entry) => entry.tabId === tabId);
 		if (closing.length === 0) return;

@@ -58,6 +58,7 @@ describe('isUiRequest', () => {
 		{ type: 'test-stop', host: 'a.com' },
 		{ type: 'clear-events', tabId: 1 },
 		{ type: 'clear-flag', tabId: 1 },
+		{ type: 'record-tab', tabId: 1 },
 		{ type: 'import-sites', sites: [{ host: 'a.com', includeSubdomains: true }] },
 		{ type: 'get-settings' },
 		{ type: 'get-leftovers' },
