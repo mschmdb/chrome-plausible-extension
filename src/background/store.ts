@@ -4,7 +4,7 @@ import type { CapturedEvent } from '../lib/events';
 import type { ExtensionState } from '../lib/registration';
 import { SETTINGS_KEY, decodeSettings, encodeSettings, type Settings } from '../lib/settings';
 
-const FLAGGED_KEY = 'flaggedOrigins';
+import { FLAGGED_ORIGINS_KEY as FLAGGED_KEY } from '../lib/storage-keys';
 const TEST_KEY = 'testMode';
 const eventsKey = (tabId: number) => `events:${tabId}`;
 

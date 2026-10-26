@@ -36,10 +36,10 @@ async function syncTabs(filter: (host: string) => boolean): Promise<void> {
 	await Promise.all(
 		pages.map(async ({ tabId, host, origin }) => {
 			if (shouldIgnoreHost(state, host)) {
-				const result = await setFlag(tabId, host);
+				const result = await setFlag(tabId, origin);
 				if (result && 'changed' in result && result.changed) set.push(origin);
 			} else if (flagged.has(origin) && !state.testHosts.includes(host)) {
-				const result = await clearFlag(tabId, host);
+				const result = await clearFlag(tabId, origin);
 				if (result && 'value' in result && result.value === null) cleared.push(origin);
 			}
 		})
@@ -131,7 +131,7 @@ async function startTest(tabId: number): Promise<void> {
 	await reconcileRegistrations();
 	// The origin stays flagged: test mode only lifts the flag for a while.
 	const pages = await pagesWhere((h) => h === host);
-	await Promise.all(pages.map((page) => clearFlag(page.tabId, host)));
+	await Promise.all(pages.map((page) => clearFlag(page.tabId, page.origin)));
 	await refreshBadges(pages.map((page) => page.tabId));
 }
 

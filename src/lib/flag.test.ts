@@ -33,7 +33,7 @@ describe('flag helpers', () => {
 			configurable: true
 		});
 		Object.defineProperty(globalThis, 'location', {
-			value: { hostname: 'a.test' },
+			value: { origin: 'https://a.test' },
 			configurable: true
 		});
 	});
@@ -42,13 +42,14 @@ describe('flag helpers', () => {
 		Reflect.deleteProperty(globalThis, 'location');
 	});
 
-	it('does nothing when the page moved to another host', () => {
-		expect(setFlagInPage('b.test')).toBeNull();
+	it('does nothing when the page moved to another origin', () => {
+		expect(setFlagInPage('https://b.test')).toBeNull();
+		expect(setFlagInPage('http://a.test')).toBeNull();
 		expect(localStorage.getItem('plausible_ignore')).toBeNull();
 		localStorage.setItem('plausible_ignore', 'true');
-		expect(clearFlagInPage('b.test')).toBeNull();
+		expect(clearFlagInPage('https://a.test:8443')).toBeNull();
 		expect(localStorage.getItem('plausible_ignore')).toBe('true');
-		expect(setFlagInPage('a.test')).toEqual({ value: 'true', changed: false });
+		expect(setFlagInPage('https://a.test')).toEqual({ value: 'true', changed: false });
 	});
 
 	it('sets, reads and clears the exact string "true"', () => {

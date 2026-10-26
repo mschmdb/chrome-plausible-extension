@@ -26,12 +26,12 @@ async function runInTab<T, A extends unknown[] = []>(
 }
 
 export const readFlag = (tabId: number) => runInTab(tabId, readFlagInPage, []);
-/** Sets the flag only if the tab is still on `host`. */
-export const setFlag = (tabId: number, host: string) =>
-	runInTab<ReturnType<typeof setFlagInPage>, [string]>(tabId, setFlagInPage, [host]);
-/** Clears the flag only if the tab is still on `host`. */
-export const clearFlag = (tabId: number, host: string) =>
-	runInTab<FlagState | null, [string]>(tabId, clearFlagInPage, [host]);
+/** Sets the flag only if the tab is still on `origin`. */
+export const setFlag = (tabId: number, origin: string) =>
+	runInTab<ReturnType<typeof setFlagInPage>, [string]>(tabId, setFlagInPage, [origin]);
+/** Clears the flag only if the tab is still on `origin`. */
+export const clearFlag = (tabId: number, origin: string) =>
+	runInTab<FlagState | null, [string]>(tabId, clearFlagInPage, [origin]);
 
 export async function detect(tabId: number): Promise<Detection | null> {
 	const snapshot = await runInTab(tabId, collectSnapshot, [], 'MAIN');

@@ -172,9 +172,12 @@ function boundObject(
 		: value;
 }
 
-/** Keeps page-controlled events small enough for session storage. */
+const utf8Bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length;
+const FALLBACK_FIELD_LENGTH = 500;
+
+/** Keeps page-controlled events below MAX_EVENT_BYTES (UTF-8) for session storage. */
 export function boundEvent(event: CapturedEvent): CapturedEvent {
-	return {
+	const bounded: CapturedEvent = {
 		...event,
 		name: trimOrNull(event.name),
 		url: trim(event.url),
@@ -184,5 +187,21 @@ export function boundEvent(event: CapturedEvent): CapturedEvent {
 		reason: trimOrNull(event.reason),
 		props: boundObject(event.props, 'Properties'),
 		revenue: boundObject(event.revenue, 'Revenue')
+	};
+	if (utf8Bytes(bounded) <= MAX_EVENT_BYTES) return bounded;
+
+	const short = (value: string) =>
+		value.length > FALLBACK_FIELD_LENGTH ? `${value.slice(0, FALLBACK_FIELD_LENGTH)}…` : value;
+	const shortOrNull = (value: string | null) => (value === null ? null : short(value));
+	return {
+		...bounded,
+		name: shortOrNull(bounded.name),
+		url: short(bounded.url),
+		domain: shortOrNull(bounded.domain),
+		referrer: shortOrNull(bounded.referrer),
+		endpoint: shortOrNull(bounded.endpoint),
+		reason: shortOrNull(bounded.reason),
+		props: bounded.props ? { '(dropped)': 'Event too large to keep' } : null,
+		revenue: bounded.revenue ? { '(dropped)': 'Event too large to keep' } : null
 	};
 }

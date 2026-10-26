@@ -172,4 +172,24 @@ describe('boundEvent', () => {
 		expect(bounded.revenue).toEqual({ '(dropped)': 'Revenue larger than 8 KB' });
 		expect(JSON.stringify(bounded).length).toBeLessThan(MAX_EVENT_BYTES);
 	});
+
+	it('keeps the whole event within the UTF-8 byte budget', () => {
+		const wide = '€'.repeat(3999);
+		const props = { a: '€'.repeat(2600) };
+		const bounded = boundEvent(
+			event({
+				name: wide,
+				url: wide,
+				domain: wide,
+				referrer: wide,
+				endpoint: wide,
+				reason: wide,
+				props,
+				revenue: props
+			})
+		);
+		const bytes = new TextEncoder().encode(JSON.stringify(bounded)).length;
+		expect(bytes).toBeLessThanOrEqual(MAX_EVENT_BYTES);
+		expect(bounded.props).toEqual({ '(dropped)': 'Event too large to keep' });
+	});
 });

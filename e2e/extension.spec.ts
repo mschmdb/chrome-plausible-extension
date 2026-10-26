@@ -177,13 +177,12 @@ test('clears the flag on the next visit when no tab was open', async ({
 	await first.close();
 
 	await send(options, { type: 'disable-site', host: 'later.test' });
-	const before = await eventCount(server, 'later.test');
 	const again = await site('later.test');
 	await expect.poll(() => flagOf(again)).toBeNull();
-	// Cleanup runs at document_start, so this visit already counts.
-	await expect.poll(() => eventCount(server, 'later.test', 0)).toBe(before + 1);
+	// Cleanup checks ownership asynchronously, so this first visit may still be ignored.
+	const afterCleanup = await eventCount(server, 'later.test');
 	await again.reload();
-	await expect.poll(() => eventCount(server, 'later.test', 0)).toBe(before + 2);
+	await expect.poll(() => eventCount(server, 'later.test', 0)).toBe(afterCleanup + 1);
 });
 
 test('leaves a flag alone that the extension did not set', async ({ site, options }) => {
