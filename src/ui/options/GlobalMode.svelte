@@ -33,14 +33,20 @@
 	/>
 	{#if enabled && !granted}
 		<Notice tone="warning">
-			<p>
-				Global mode is on, but this device has no access to all sites. Turn it off and on again.
-			</p>
+			<p>Global mode is on, but this device has no access to all sites. The flag is not set.</p>
+			<button
+				type="button"
+				class="button"
+				disabled={busy}
+				onclick={() => run(() => requestAndRun({ type: 'set-global', enabled: true }))}
+			>
+				Restore access
+			</button>
 		</Notice>
 	{/if}
 	<p class="hint">
-		Turning global mode off clears the flag in open tabs. Sites you visited earlier keep it until
-		you clear their site data.
+		Turning global mode off clears the flag in open tabs and removes access to all sites. Sites you
+		visited earlier keep the flag and show up under leftover flags.
 	</p>
 </section>
 
