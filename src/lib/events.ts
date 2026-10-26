@@ -4,7 +4,7 @@
 export type Transport = 'fetch' | 'xhr' | 'beacon' | 'console';
 export type Outcome = 'sent' | 'ignored' | 'failed';
 export type EventKind =
-	'pageview' | 'outbound' | 'file-download' | 'not-found' | 'custom' | 'unknown';
+	'pageview' | 'engagement' | 'outbound' | 'file-download' | 'not-found' | 'custom' | 'unknown';
 export type PayloadWarning =
 	| 'url-too-long'
 	| 'too-many-props'
@@ -78,6 +78,8 @@ export function classifyEvent(name: string | null): EventKind {
 			return 'unknown';
 		case 'pageview':
 			return 'pageview';
+		case 'engagement':
+			return 'engagement';
 		case 'Outbound Link: Click':
 			return 'outbound';
 		case 'File Download':

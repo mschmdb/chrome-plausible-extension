@@ -79,6 +79,7 @@ describe('parsePayload', () => {
 describe('classifyEvent', () => {
 	it.each([
 		['pageview', 'pageview'],
+		['engagement', 'engagement'],
 		['Outbound Link: Click', 'outbound'],
 		['File Download', 'file-download'],
 		['404', 'not-found'],

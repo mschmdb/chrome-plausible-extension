@@ -57,6 +57,7 @@ export const WARNING_TEXT: Record<PayloadWarning, string> = {
 
 export const KIND_LABEL: Record<EventKind, string> = {
 	pageview: 'Pageview',
+	engagement: 'Engagement',
 	outbound: 'Outbound link',
 	'file-download': 'File download',
 	'not-found': '404',
