@@ -92,8 +92,10 @@ describe('collectSnapshot script matching', () => {
 		['https://cdn.test/plausible-docs/app.js', false],
 		['https://cdn.test/js/script.js', false],
 		['https://cdn.test/js/pa-XyZ_12.js', true],
-		['https://cdn.test/assets/plausible.outbound-links.js', true],
-		['https://stats.plausible.io/x.js', true]
+		['https://p.proxy.test/js/pa-GzUosA8gkfhIw50L14ipf.js', true],
+		// Seen on live sites: an init queue file and unrelated scripts on plausible.io.
+		['https://site.test/plausible-init.js', false],
+		['https://plausible.io/assets/js/alpine.js?v=1', false]
 	])('%s → %s', (src, expected) => {
 		addScript({ src });
 		expect(collectSnapshot().scripts.some((s) => s.src === src)).toBe(expected);

@@ -25,12 +25,13 @@ export interface PageSnapshot {
 
 export function collectSnapshot(): PageSnapshot {
 	const MAX_CLASSES = 200;
-	// Legacy installs always carry data-domain. Without it, trust only the host or file name.
-	const isCandidateSrc = (url: string): boolean => {
+	// Only actual trackers count. The legacy script requires data-domain (also behind a
+	// proxy), the new one is named pa-<id>.js. Helpers like a "plausible-init.js" queue or
+	// other scripts on a plausible.io page are not trackers.
+	const isTrackerSrc = (url: string): boolean => {
 		try {
-			const { hostname, pathname } = new URL(url, location.href);
-			const file = pathname.split('/').pop() ?? '';
-			return hostname.includes('plausible') || /^(pa-[\w-]+|plausible[\w.-]*)\.js$/i.test(file);
+			const file = new URL(url, location.href).pathname.split('/').pop() ?? '';
+			return /^pa-[\w-]+\.js$/i.test(file);
 		} catch {
 			return false;
 		}
@@ -49,10 +50,7 @@ export function collectSnapshot(): PageSnapshot {
 		const dataDomain = el.getAttribute('data-domain');
 		const inline = !src && /plausible\.init|window\.plausible\s*=/.test(el.textContent ?? '');
 		const isCandidate =
-			inline ||
-			dataDomain !== null ||
-			el.id === 'plausible' ||
-			(src !== null && isCandidateSrc(src));
+			inline || dataDomain !== null || el.id === 'plausible' || (src !== null && isTrackerSrc(src));
 		if (!isCandidate) continue;
 		scripts.push({
 			src: src ? el.src : null,
