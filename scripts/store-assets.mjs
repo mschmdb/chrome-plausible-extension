@@ -157,6 +157,20 @@ try {
 		svg{width:96px;height:96px} h1{margin:0;font-size:36px} p{margin:0;font-size:16px;color:var(--ink-muted)}
 		</style></head><body>${icon}<h1>Uncounted</h1><p>Exclude your own visits from Plausible Analytics</p></body></html>`);
 	await canvas.screenshot({ path: resolve(outDir, 'promo-small-440x280.png') });
+
+	await canvas.setViewportSize({ width: 1400, height: 560 });
+	await canvas.setContent(`<!doctype html><html><head><style>${tokens}
+		body{margin:0;width:1400px;height:560px;display:flex;align-items:center;justify-content:center;gap:56px;background:var(--bg);color:var(--ink);font-family:system-ui,sans-serif}
+		svg{width:220px;height:220px} h1{margin:0 0 16px;font-size:84px;line-height:1} p{margin:0;font-size:32px;color:var(--ink-muted)}
+		</style></head><body>${icon}<div><h1>Uncounted</h1><p>Exclude your own visits from Plausible Analytics</p></div></body></html>`);
+	await canvas.screenshot({ path: resolve(outDir, 'promo-marquee-1400x560.png') });
+
+	// Store icon: 96 px artwork with 16 px transparent padding, per the store image guidelines.
+	await canvas.setViewportSize({ width: 128, height: 128 });
+	await canvas.setContent(
+		`<!doctype html><html><head><style>html,body{margin:0;background:transparent}div{padding:16px}svg{display:block;width:96px;height:96px}</style></head><body><div>${icon}</div></body></html>`
+	);
+	await canvas.screenshot({ path: resolve(outDir, 'store-icon-128.png'), omitBackground: true });
 	await plain.close();
 
 	process.stdout.write(`Wrote store assets to ${outDir}\n`);
