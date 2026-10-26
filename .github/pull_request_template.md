@@ -1,9 +1,11 @@
-## Was und warum
+## What and why
 
-## Checkliste
+Closes #
 
-- [ ] `/codex-review` gelaufen, Findings behoben oder begründet
-- [ ] Lint, Typecheck, Tests grün
-- [ ] Keine Secrets, privaten Daten, `console.log`
-- [ ] Neue Permissions begründet (falls vorhanden)
-- [ ] Tastatur und Screenreader geprüft (falls UI)
+## Checklist
+
+- [ ] Codex review ran, findings fixed or justified
+- [ ] Lint, typecheck and tests pass
+- [ ] No secrets, private data or `console.log`
+- [ ] New permissions justified (if any)
+- [ ] Keyboard and screen reader checked (if UI)

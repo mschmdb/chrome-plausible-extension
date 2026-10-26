@@ -1,17 +1,19 @@
-# Projektregeln
+# Project rules for AI agents
 
-Repo und Extension werden öffentlich. Jede Änderung muss dafür taugen.
+This repo and the extension are public. Every change must be fit for that.
 
-## Pflicht vor jedem Merge
+## Before every merge
 
-- `/codex-review` über den Diff laufen lassen. Findings beheben oder im PR begründen.
-- `pnpm lint`, `pnpm check`, `pnpm test` grün
-- TDD: erst Test, dann Code
+- Run `/codex-review` on the diff. Fix findings or justify them in the PR.
+- `pnpm lint`, `pnpm check`, `pnpm test` pass
+- TDD: test first, then code
 
-## Public-Hygiene
+## Public hygiene
 
-- Keine Secrets, Tokens, privaten Pfade, E-Mails oder internen Notizen in Code, Commits, Issues
-- Keine Telemetrie, keine Remote-Requests
-- Kein `console.log` im Commit
-- Permissions minimal halten. Jede neue Permission braucht eine Begründung im PR.
-- UI barrierefrei nach WCAG 2.2 AA
+- English for code, docs, commits, issues and PRs
+- No secrets, tokens, private paths, email addresses or internal notes in code, commits or issues
+- No telemetry, no remote requests
+- No `console.log` in commits
+- Minimal permissions. Every new permission needs a reason in the PR.
+- UI meets WCAG 2.2 AA
+- Follow CONTRIBUTING.md and SECURITY.md
