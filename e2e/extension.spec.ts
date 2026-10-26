@@ -180,6 +180,7 @@ test('clears the flag on the next visit when no tab was open', async ({
 	const again = await site('later.test');
 	await expect.poll(() => flagOf(again)).toBeNull();
 	// Cleanup checks ownership asynchronously, so this first visit may still be ignored.
+	await again.waitForLoadState('networkidle');
 	const afterCleanup = await eventCount(server, 'later.test');
 	await again.reload();
 	await expect.poll(() => eventCount(server, 'later.test', 0)).toBe(afterCleanup + 1);
