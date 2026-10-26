@@ -56,6 +56,6 @@ Architecture decisions live in [docs/adr](docs/adr). See [CONTRIBUTING.md](CONTR
 
 ## License
 
-[MIT](LICENSE). The icon glyph comes from [Lucide](https://lucide.dev) (ISC license).
+[MIT](LICENSE).
 
 Plausible is a trademark of Plausible Insights OÜ. This project is independent.

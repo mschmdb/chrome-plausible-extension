@@ -37,6 +37,5 @@ The extension collects no user data. Nothing to declare.
 
 ## Open points before submission
 
-- Final icon (#18)
 - Screenshots (1280×800): popup on a site with Plausible, developer tools, options page
 - Developer account registration
