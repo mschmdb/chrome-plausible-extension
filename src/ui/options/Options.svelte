@@ -4,7 +4,9 @@
 	import type { Settings } from '../../lib/settings';
 	import { send } from '../client';
 	import Notice from '../components/Notice.svelte';
+	import Switch from '../components/Switch.svelte';
 	import GlobalMode from './GlobalMode.svelte';
+	import ImportExport from './ImportExport.svelte';
 	import Leftovers from './Leftovers.svelte';
 	import SiteList from './SiteList.svelte';
 
@@ -81,6 +83,18 @@
 		/>
 		<SiteList sites={settings.sites} {granted} {busy} {run} />
 		<Leftovers origins={leftovers} {busy} {run} />
+		<ImportExport sites={settings.sites} {busy} {run} />
+		<section aria-labelledby="dev-title">
+			<h2 id="dev-title">Developer tools</h2>
+			<Switch
+				label="Record Plausible events"
+				description="Watches network requests to Plausible on enabled sites and lists them in the popup. Nothing leaves your browser. Reload open pages after turning it on."
+				checked={settings.eventLog}
+				disabled={busy}
+				{busy}
+				onchange={(enabled) => run(() => send({ type: 'set-event-log', enabled }))}
+			/>
+		</section>
 	{:else if !error}
 		<p role="status">Loading settings…</p>
 	{/if}
@@ -101,6 +115,14 @@
 	header p {
 		margin: 0;
 		color: var(--ink-muted);
+	}
+	section {
+		display: grid;
+		gap: var(--space-3);
+	}
+	h2 {
+		margin: 0;
+		font-size: var(--text-lg);
 	}
 	[role='alert']:empty {
 		display: none;

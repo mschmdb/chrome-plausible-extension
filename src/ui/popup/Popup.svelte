@@ -4,6 +4,7 @@
 	import type { TabStatus } from '../../lib/tab-status';
 	import { activeTabId, send } from '../client';
 	import Notice from '../components/Notice.svelte';
+	import DevTools from './DevTools.svelte';
 	import SiteControls from './SiteControls.svelte';
 	import StatusCard from './StatusCard.svelte';
 
@@ -71,7 +72,9 @@
 		</div>
 
 		{#if tab.host}
-			<SiteControls tab={{ ...tab, host: tab.host }} {busy} {run} />
+			{@const current = { ...tab, host: tab.host }}
+			<SiteControls tab={current} {busy} {run} />
+			<DevTools tab={current} {busy} {run} />
 		{/if}
 	{:else if !loadError}
 		<p class="loading" role="status">Reading this tab…</p>

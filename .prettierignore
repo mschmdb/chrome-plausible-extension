@@ -4,3 +4,4 @@ static/
 dist-e2e/
 test-results/
 playwright-report/
+.vitest/

@@ -196,3 +196,26 @@ test('leaves a flag alone that the extension did not set', async ({ site, option
 	await send(options, { type: 'disable-site', host: 'manual.test' });
 	expect(await flagOf(page)).toBe('true');
 });
+
+test('imports a site list from a file', async ({ options }) => {
+	await options.reload();
+	await options.locator('input[type="file"]').setInputFiles({
+		name: 'sites.json',
+		mimeType: 'application/json',
+		buffer: Buffer.from(
+			JSON.stringify({
+				format: 'ignore-for-plausible/sites',
+				version: 1,
+				sites: [{ host: 'imported.test', includeSubdomains: true }, { host: 'bad host' }]
+			})
+		)
+	});
+	await expect(options.getByRole('status')).toContainText('Imported 1 site');
+	await expect(options.getByRole('status')).toContainText('Skipped 1 invalid entry');
+	await expect(options.getByRole('row', { name: /imported\.test/ })).toContainText('Granted');
+
+	const results = await new AxeBuilder({ page: options })
+		.withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
+		.analyze();
+	expect(results.violations.map((v) => v.id)).toEqual([]);
+});
