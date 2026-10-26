@@ -2,6 +2,7 @@
 // cannot tell ports apart, so the script checks ownership of the exact origin first.
 import { clearFlagInPage } from '../lib/flag';
 import type { ContentMessage } from '../lib/messages';
+import { safeSend } from '../lib/safe-send';
 
 import { FLAGGED_ORIGINS_KEY as FLAGGED_KEY } from '../lib/storage-keys';
 
@@ -14,7 +15,7 @@ async function cleanUp(): Promise<void> {
 	if (!result) return;
 	const message: ContentMessage =
 		'blocked' in result ? { type: 'flag-blocked' } : { type: 'flag-cleared' };
-	await chrome.runtime.sendMessage(message);
+	safeSend(message);
 }
 
 cleanUp().catch(() => undefined);
