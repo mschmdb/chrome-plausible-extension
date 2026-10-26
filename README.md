@@ -6,7 +6,7 @@ A browser extension that stops [Plausible Analytics](https://plausible.io) from 
 
 > **Unofficial.** This extension is not made by, endorsed by or affiliated with [Plausible Analytics](https://plausible.io) or Plausible Insights OÜ. It only uses the opt-out flag that Plausible [documents](https://plausible.io/docs/excluding-localstorage).
 
-> **Status:** early development. Not yet in any store.
+> **Status:** ready for the Chrome Web Store, not published yet. See [CHANGELOG.md](CHANGELOG.md).
 
 ## Why
 
@@ -48,6 +48,7 @@ pnpm test:e2e     # loads the extension in Chromium
 pnpm lint
 pnpm check        # type check
 pnpm package      # zips dist/ into release/
+node scripts/build.mjs --e2e && node scripts/store-assets.mjs  # store screenshots
 ```
 
 Load `dist/` in Chrome via `chrome://extensions` → Developer mode → Load unpacked.
