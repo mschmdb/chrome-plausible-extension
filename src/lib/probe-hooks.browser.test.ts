@@ -83,3 +83,31 @@ describe('installProbe', () => {
 		});
 	});
 });
+
+describe('installProbe with XMLHttpRequest', () => {
+	it('reports each send once, also when the request object is reused', async () => {
+		const events: CapturedEvent[] = [];
+		const win = {
+			fetch,
+			XMLHttpRequest: class extends XMLHttpRequest {},
+			navigator: {} as Navigator,
+			console: { warn: () => undefined } as unknown as Console,
+			location: { href: `${location.origin}/page` } as Location
+		};
+		installProbe(win, (e) => events.push(e));
+
+		const xhr = new win.XMLHttpRequest();
+		const send = (name: string) =>
+			new Promise<void>((done) => {
+				xhr.addEventListener('loadend', () => done(), { once: true });
+				xhr.open('POST', '/__probe_test_missing__');
+				xhr.send(JSON.stringify({ n: name, u: 'https://a.test/' }));
+			});
+
+		await send('first');
+		await send('second');
+		await vi.waitFor(() => expect(events.map((e) => e.name)).toEqual(['first', 'second']));
+		// The page reopens the XHR in its own loadend handler, so the status may already be reset.
+		expect(events[0]?.transport).toBe('xhr');
+	});
+});

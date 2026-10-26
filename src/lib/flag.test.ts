@@ -32,14 +32,29 @@ describe('flag helpers', () => {
 			value: new MemoryStorage(),
 			configurable: true
 		});
+		Object.defineProperty(globalThis, 'location', {
+			value: { hostname: 'a.test' },
+			configurable: true
+		});
 	});
 	afterEach(() => {
 		Reflect.deleteProperty(globalThis, 'localStorage');
+		Reflect.deleteProperty(globalThis, 'location');
+	});
+
+	it('does nothing when the page moved to another host', () => {
+		expect(setFlagInPage('b.test')).toBeNull();
+		expect(localStorage.getItem('plausible_ignore')).toBeNull();
+		localStorage.setItem('plausible_ignore', 'true');
+		expect(clearFlagInPage('b.test')).toBeNull();
+		expect(localStorage.getItem('plausible_ignore')).toBe('true');
+		expect(setFlagInPage('a.test')).toEqual({ value: 'true', changed: false });
 	});
 
 	it('sets, reads and clears the exact string "true"', () => {
 		expect(readFlagInPage()).toEqual({ value: null });
-		expect(setFlagInPage()).toEqual({ value: 'true' });
+		expect(setFlagInPage()).toEqual({ value: 'true', changed: true });
+		expect(setFlagInPage()).toEqual({ value: 'true', changed: false });
 		expect(localStorage.getItem('plausible_ignore')).toBe('true');
 		expect(clearFlagInPage()).toEqual({ value: null });
 		expect(readFlagInPage()).toEqual({ value: null });

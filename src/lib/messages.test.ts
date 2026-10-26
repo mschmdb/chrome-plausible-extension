@@ -33,12 +33,14 @@ describe('isProbeMessage', () => {
 });
 
 describe('isContentMessage', () => {
-	it.each([{ type: 'flag-blocked' }, { type: 'flag-cleared' }, { type: 'event', event }])(
-		'accepts %j',
-		(value) => {
-			expect(isContentMessage(value)).toBe(true);
-		}
-	);
+	it.each([
+		{ type: 'flag-set' },
+		{ type: 'flag-blocked' },
+		{ type: 'flag-cleared' },
+		{ type: 'event', event }
+	])('accepts %j', (value) => {
+		expect(isContentMessage(value)).toBe(true);
+	});
 	it.each([{ type: 'enable-site' }, { type: 'event', event: {} }, {}])('rejects %j', (value) => {
 		expect(isContentMessage(value)).toBe(false);
 	});
@@ -57,6 +59,8 @@ describe('isUiRequest', () => {
 		{ type: 'clear-events', tabId: 1 },
 		{ type: 'import-sites', sites: [{ host: 'a.com', includeSubdomains: true }] },
 		{ type: 'get-settings' },
+		{ type: 'get-leftovers' },
+		{ type: 'forget-leftovers' },
 		{ type: 'pending-grant', action: { type: 'set-global', enabled: true } },
 		{ type: 'pending-grant', action: { type: 'set-subdomains', host: 'a.com', enabled: true } }
 	])('accepts %j', (value) => {

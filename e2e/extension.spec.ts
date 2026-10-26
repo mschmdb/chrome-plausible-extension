@@ -162,3 +162,37 @@ test('removing a site clears the flag in open tabs', async ({ site, server, opti
 	await page.reload();
 	await expect.poll(() => eventCount(server, 'site.test', 0)).toBe(before + 1);
 });
+
+test('clears the flag on the next visit when no tab was open', async ({
+	site,
+	server,
+	options
+}) => {
+	await send(options, {
+		type: 'enable-site',
+		site: { host: 'later.test', includeSubdomains: false }
+	});
+	const first = await site('later.test');
+	expect(await flagOf(first)).toBe('true');
+	await first.close();
+
+	await send(options, { type: 'disable-site', host: 'later.test' });
+	const before = await eventCount(server, 'later.test');
+	const again = await site('later.test');
+	await expect.poll(() => flagOf(again)).toBeNull();
+	// Cleanup runs at document_start, so this visit already counts.
+	await expect.poll(() => eventCount(server, 'later.test', 0)).toBe(before + 1);
+	await again.reload();
+	await expect.poll(() => eventCount(server, 'later.test', 0)).toBe(before + 2);
+});
+
+test('leaves a flag alone that the extension did not set', async ({ site, options }) => {
+	const page = await site('manual.test');
+	await page.evaluate(() => localStorage.setItem('plausible_ignore', 'true'));
+	await send(options, {
+		type: 'enable-site',
+		site: { host: 'manual.test', includeSubdomains: false }
+	});
+	await send(options, { type: 'disable-site', host: 'manual.test' });
+	expect(await flagOf(page)).toBe('true');
+});

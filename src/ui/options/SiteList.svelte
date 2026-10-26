@@ -19,6 +19,13 @@
 	const hasAccess = (site: Site) =>
 		matchPatterns(site).every((pattern) => isPatternGranted(pattern, granted));
 
+	const missing = $derived(sites.filter((site) => !hasAccess(site)));
+
+	function grantMissing() {
+		const origins = missing.flatMap(matchPatterns);
+		run(() => chrome.permissions.request({ origins }));
+	}
+
 	function addSite(event: SubmitEvent) {
 		event.preventDefault();
 		const host = normalizeHost(newHost);
@@ -68,6 +75,15 @@
 			<p id="new-host-error" class="error">{inputError}</p>
 		{/if}
 	</form>
+
+	{#if missing.length > 1}
+		<div class="bulk">
+			<p>{missing.length} sites have no access on this device, so their flag is not set.</p>
+			<button type="button" class="button" disabled={busy} onclick={grantMissing}>
+				Grant access to {missing.length} sites
+			</button>
+		</div>
+	{/if}
 
 	{#if sites.length === 0}
 		<p class="empty">No sites yet. Add one here or use the toolbar button on a site.</p>
@@ -168,6 +184,16 @@
 		margin: 0;
 		color: var(--error);
 		font-size: var(--text-sm);
+	}
+	.bulk {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		align-items: center;
+		font-size: var(--text-sm);
+	}
+	.bulk p {
+		margin: 0;
 	}
 	.empty {
 		margin: 0;

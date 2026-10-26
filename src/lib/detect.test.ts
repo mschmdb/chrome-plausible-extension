@@ -13,6 +13,7 @@ const script = (overrides: Partial<ScriptInfo> = {}): ScriptInfo => ({
 });
 
 const snapshot = (overrides: Partial<PageSnapshot> = {}): PageSnapshot => ({
+	pageUrl: 'https://example.com/blog/post',
 	hostname: 'example.com',
 	protocol: 'https:',
 	global: { present: false, loaded: false, version: null, lib: null },
@@ -52,14 +53,14 @@ describe('analyzeSnapshot', () => {
 				global: { present: true, loaded: true, version: null, lib: null },
 				scripts: [
 					script({
-						src: 'https://example.com/js/script.js',
+						src: 'https://plausible.io/js/script.js',
 						dataDomain: 'example.com',
-						dataApi: '/api/event'
+						dataApi: '/proxy/event'
 					})
 				]
 			})
 		);
-		expect(result.endpoint).toBe('https://example.com/api/event');
+		expect(result.endpoint).toBe('https://example.com/proxy/event');
 	});
 
 	it('detects the new web snippet', () => {

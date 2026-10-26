@@ -26,7 +26,7 @@
 	<Switch
 		label="Ignore my visits on every site"
 		description="Needs access to all sites. The extension only sets the plausible_ignore flag and sends no data anywhere."
-		checked={enabled && granted}
+		checked={enabled}
 		disabled={busy}
 		{busy}
 		onchange={toggle}

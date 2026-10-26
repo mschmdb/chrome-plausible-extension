@@ -1,4 +1,3 @@
-import { hostFromUrl } from '../lib/host';
 import { isContentMessage, isUiRequest, type UiResponse } from '../lib/messages';
 import { SETTINGS_KEY } from '../lib/settings';
 import { refreshBadge } from './badge';
@@ -7,8 +6,10 @@ import {
 	completePendingGrant,
 	finishCleanup,
 	handleUiRequest,
+	onSettingsSynced,
 	onTabRemoved,
 	recordEvent,
+	recordFlagSet,
 	serial
 } from './service';
 
@@ -25,7 +26,7 @@ chrome.permissions.onAdded.addListener(() => {
 chrome.permissions.onRemoved.addListener(() => void reconcile());
 chrome.storage.sync.onChanged.addListener((changes) => {
 	// Settings can change on another device.
-	if (SETTINGS_KEY in changes) void reconcile();
+	if (SETTINGS_KEY in changes) void onSettingsSynced().catch(() => undefined);
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
@@ -33,19 +34,26 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
 });
 chrome.tabs.onRemoved.addListener((tabId) => void onTabRemoved(tabId).catch(() => undefined));
 
+function senderOrigin(sender: chrome.runtime.MessageSender): string | null {
+	const origin = sender.origin ?? (sender.url ? new URL(sender.url).origin : null);
+	return origin && /^https?:\/\//.test(origin) ? origin : null;
+}
+
 function handleContentMessage(message: unknown, sender: chrome.runtime.MessageSender): void {
 	const tabId = sender.tab?.id;
-	if (tabId === undefined || !isContentMessage(message)) return;
+	if (tabId === undefined || sender.frameId !== 0 || !isContentMessage(message)) return;
+	const origin = senderOrigin(sender);
 	switch (message.type) {
 		case 'event':
 			void recordEvent(tabId, message.event).catch(() => undefined);
 			return;
-		case 'flag-cleared': {
-			const host = sender.url ? hostFromUrl(sender.url) : null;
-			if (host) void finishCleanup(host).catch(() => undefined);
+		case 'flag-set':
+			if (origin) void recordFlagSet(origin).catch(() => undefined);
+			return;
+		case 'flag-cleared':
+			if (origin) void finishCleanup(origin).catch(() => undefined);
 			void refreshBadge(tabId);
 			return;
-		}
 		case 'flag-blocked':
 			void refreshBadge(tabId);
 	}

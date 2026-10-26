@@ -1,7 +1,13 @@
 import type { DetectionStatus } from './detect';
 
 export type PageStatus =
-	'ignored' | 'counted' | 'not-detected' | 'storage-blocked' | 'unsupported' | 'unknown';
+	| 'ignored'
+	| 'counted'
+	| 'tracker-blocked'
+	| 'not-detected'
+	| 'storage-blocked'
+	| 'unsupported'
+	| 'unknown';
 
 export type FlagState = { value: string | null } | { blocked: true };
 
@@ -24,7 +30,8 @@ export function pageStatus({ host, flag, detection }: StatusInput): PageStatus {
 	if ('blocked' in flag) return 'storage-blocked';
 	// The tracker compares against the exact string "true".
 	if (flag.value === 'true') return 'ignored';
-	if (detection === 'detected' || detection === 'blocked') return 'counted';
+	if (detection === 'detected') return 'counted';
+	if (detection === 'blocked') return 'tracker-blocked';
 	return 'not-detected';
 }
 
@@ -52,6 +59,8 @@ export function badgeFor(status: PageStatus): Badge {
 				color: BADGE_COLORS.error,
 				title: `${NAME}: localStorage is blocked, the flag cannot be set`
 			};
+		case 'tracker-blocked':
+			return { text: '', color: null, title: `${NAME}: the Plausible script did not run` };
 		case 'not-detected':
 			return { text: '', color: null, title: `${NAME}: no Plausible script found` };
 		case 'unsupported':

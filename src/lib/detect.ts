@@ -118,7 +118,7 @@ export function analyzeSnapshot(snapshot: PageSnapshot): Detection {
 	let endpoint: string | null = null;
 	if (variant === 'legacy' && main?.src) {
 		endpoint = main.dataApi
-			? resolveUrl(main.dataApi, main.src)
+			? resolveUrl(main.dataApi, snapshot.pageUrl)
 			: `${originOf(main.src) ?? ''}/api/event`;
 	}
 

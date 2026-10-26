@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
 	ALL_SITES_PATTERN,
 	isPatternGranted,
+	pendingCleanup,
 	planRegistrations,
-	shouldIgnoreHost
+	shouldIgnoreHost,
+	unneededGrants
 } from './registration';
 import { DEFAULT_SETTINGS, type Settings } from './settings';
 
@@ -16,7 +18,7 @@ const state = (overrides: Partial<Parameters<typeof planRegistrations>[0]> = {})
 	settings: DEFAULT_SETTINGS,
 	granted: [],
 	testHosts: [],
-	cleanupSites: [],
+	flaggedOrigins: [],
 	...overrides
 });
 
@@ -94,15 +96,25 @@ describe('planRegistrations', () => {
 		});
 	});
 
-	it('registers cleanup for removed sites that are not otherwise active', () => {
+	it('registers cleanup for flagged origins that are no longer ignored', () => {
 		const plan = planRegistrations(
 			state({
-				settings: settings({ sites: [site('a.com')] }),
-				granted: ['*://a.com/*', '*://old.com/*', '*://gone.com/*'],
-				cleanupSites: [site('old.com'), site('a.com'), site('nogrant.com')]
+				settings: settings({ sites: [site('sub.a.com')] }),
+				granted: ['*://sub.a.com/*', '*://a.com/*', '*://*.a.com/*'],
+				flaggedOrigins: [
+					'https://a.com',
+					'http://a.com:8080',
+					'https://www.a.com',
+					'https://sub.a.com',
+					'https://nogrant.com'
+				]
 			})
 		);
-		expect(plan.find((s) => s.id === 'cleanup')?.matches).toEqual(['*://old.com/*']);
+		expect(plan.find((s) => s.id === 'cleanup')?.matches).toEqual([
+			'https://a.com/*',
+			'http://a.com/*',
+			'https://www.a.com/*'
+		]);
 	});
 
 	it('adds the probe and relay scripts when the event log is on, including test hosts', () => {
@@ -144,5 +156,53 @@ describe('shouldIgnoreHost', () => {
 	it('is true everywhere in global mode', () => {
 		const g = state({ settings: settings({ global: true }), granted: [ALL_SITES_PATTERN] });
 		expect(shouldIgnoreHost(g, 'anything.net')).toBe(true);
+	});
+});
+
+describe('pendingCleanup', () => {
+	it('lists flagged origins that should not keep the flag, except test hosts', () => {
+		const s = state({
+			settings: settings({ sites: [site('a.com')] }),
+			granted: ['*://a.com/*'],
+			testHosts: ['t.com'],
+			flaggedOrigins: ['https://a.com', 'https://b.com', 'https://t.com', 'not an origin']
+		});
+		expect(pendingCleanup(s)).toEqual(['https://b.com']);
+	});
+
+	it('keeps origins whose site lost access, since the flag is still wanted', () => {
+		const s = state({
+			settings: settings({ sites: [site('a.com')] }),
+			flaggedOrigins: ['https://a.com']
+		});
+		expect(pendingCleanup(s)).toEqual([]);
+	});
+});
+
+describe('unneededGrants', () => {
+	it('keeps grants for configured sites and global mode', () => {
+		const s = state({
+			settings: settings({ global: true, sites: [site('a.com', true)] }),
+			granted: [ALL_SITES_PATTERN, '*://a.com/*', '*://*.a.com/*']
+		});
+		expect(unneededGrants(s)).toEqual([]);
+	});
+
+	it('keeps grants needed to clean up flagged origins', () => {
+		const s = state({
+			granted: ['*://a.com/*', '*://*.b.com/*', '*://c.com/*'],
+			flaggedOrigins: ['https://a.com', 'http://x.b.com']
+		});
+		expect(unneededGrants(s)).toEqual(['*://c.com/*']);
+	});
+
+	it('drops access to all sites when global mode is off, even with pending cleanup', () => {
+		const s = state({ granted: [ALL_SITES_PATTERN], flaggedOrigins: ['https://a.com'] });
+		expect(unneededGrants(s)).toEqual([ALL_SITES_PATTERN]);
+	});
+
+	it('never touches grants in other formats or the ones explicitly kept', () => {
+		const s = state({ granted: ['https://a.com/*', '*://k.com/*', '*://z.com/*'] });
+		expect(unneededGrants(s, ['*://k.com/*'])).toEqual(['*://z.com/*']);
 	});
 });

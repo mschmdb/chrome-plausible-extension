@@ -5,20 +5,24 @@
 	import { send } from '../client';
 	import Notice from '../components/Notice.svelte';
 	import GlobalMode from './GlobalMode.svelte';
+	import Leftovers from './Leftovers.svelte';
 	import SiteList from './SiteList.svelte';
 
 	let settings = $state<Settings | null>(null);
 	let granted = $state<string[]>([]);
+	let leftovers = $state<string[]>([]);
 	let busy = $state(false);
 	let error = $state<string | null>(null);
 
 	async function load() {
-		const [loaded, permissions] = await Promise.all([
+		const [loaded, permissions, left] = await Promise.all([
 			send<Settings>({ type: 'get-settings' }),
-			chrome.permissions.getAll()
+			chrome.permissions.getAll(),
+			send<string[]>({ type: 'get-leftovers' })
 		]);
 		settings = loaded;
 		granted = permissions.origins ?? [];
+		leftovers = left;
 	}
 
 	/** Starts the task synchronously, so permission prompts keep the click's user gesture. */
@@ -41,10 +45,12 @@
 		});
 		const reload = () => void load().catch(() => undefined);
 		chrome.storage.sync.onChanged.addListener(reload);
+		chrome.storage.local.onChanged.addListener(reload);
 		chrome.permissions.onAdded.addListener(reload);
 		chrome.permissions.onRemoved.addListener(reload);
 		return () => {
 			chrome.storage.sync.onChanged.removeListener(reload);
+			chrome.storage.local.onChanged.removeListener(reload);
 			chrome.permissions.onAdded.removeListener(reload);
 			chrome.permissions.onRemoved.removeListener(reload);
 		};
@@ -74,6 +80,7 @@
 			{run}
 		/>
 		<SiteList sites={settings.sites} {granted} {busy} {run} />
+		<Leftovers origins={leftovers} {busy} {run} />
 	{:else if !error}
 		<p role="status">Loading settings…</p>
 	{/if}

@@ -1,17 +1,10 @@
 // Typed access to chrome.storage. Settings sync across devices. Permissions do not,
 // so everything that depends on granted access stays local or in the session.
 import type { CapturedEvent } from '../lib/events';
-import { normalizeHost, type Site } from '../lib/host';
 import type { ExtensionState } from '../lib/registration';
-import {
-	SETTINGS_KEY,
-	decodeSettings,
-	encodeSettings,
-	mergeSites,
-	type Settings
-} from '../lib/settings';
+import { SETTINGS_KEY, decodeSettings, encodeSettings, type Settings } from '../lib/settings';
 
-const CLEANUP_KEY = 'cleanupSites';
+const FLAGGED_KEY = 'flaggedOrigins';
 const TEST_KEY = 'testMode';
 const eventsKey = (tabId: number) => `events:${tabId}`;
 
@@ -29,24 +22,18 @@ export async function saveSettings(settings: Settings): Promise<void> {
 	await chrome.storage.sync.set({ [SETTINGS_KEY]: encodeSettings(settings) });
 }
 
-export async function loadCleanupSites(): Promise<Site[]> {
-	const stored = await chrome.storage.local.get(CLEANUP_KEY);
-	const raw: unknown = stored[CLEANUP_KEY];
-	if (!Array.isArray(raw)) return [];
-	return mergeSites(
-		raw.flatMap((value: unknown) => {
-			if (typeof value !== 'object' || value === null) return [];
-			const { host, includeSubdomains } = value as Record<string, unknown>;
-			const normalized = typeof host === 'string' ? normalizeHost(host) : null;
-			return normalized
-				? [{ host: normalized, includeSubdomains: includeSubdomains === true }]
-				: [];
-		})
-	);
+export async function loadFlaggedOrigins(): Promise<string[]> {
+	const stored = await chrome.storage.local.get(FLAGGED_KEY);
+	const raw: unknown = stored[FLAGGED_KEY];
+	return Array.isArray(raw)
+		? raw.filter((value): value is string => typeof value === 'string')
+		: [];
 }
 
-export async function saveCleanupSites(sites: readonly Site[]): Promise<void> {
-	await chrome.storage.local.set({ [CLEANUP_KEY]: sites });
+export async function updateFlaggedOrigins(change: (origins: Set<string>) => void): Promise<void> {
+	const origins = new Set(await loadFlaggedOrigins());
+	change(origins);
+	await chrome.storage.local.set({ [FLAGGED_KEY]: [...origins].sort() });
 }
 
 export async function loadTestEntries(): Promise<TestEntry[]> {
@@ -81,16 +68,16 @@ export async function clearEvents(tabId: number): Promise<void> {
 }
 
 export async function loadState(): Promise<ExtensionState> {
-	const [settings, permissions, testEntries, cleanupSites] = await Promise.all([
+	const [settings, permissions, testEntries, flaggedOrigins] = await Promise.all([
 		loadSettings(),
 		chrome.permissions.getAll(),
 		loadTestEntries(),
-		loadCleanupSites()
+		loadFlaggedOrigins()
 	]);
 	return {
 		settings,
 		granted: permissions.origins ?? [],
 		testHosts: [...new Set(testEntries.map((entry) => entry.host))],
-		cleanupSites
+		flaggedOrigins
 	};
 }

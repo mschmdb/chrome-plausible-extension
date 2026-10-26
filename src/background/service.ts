@@ -1,43 +1,77 @@
 // Business logic behind UI requests and content-script messages.
 // Every mutation runs through one serial queue, so storage updates never interleave.
-import { appendEvent, type CapturedEvent } from '../lib/events';
+import { appendEvent, boundEvent, type CapturedEvent } from '../lib/events';
+import { requiredOrigins } from '../lib/grant-origins';
 import { matchPatterns, siteCoversHost, type Site } from '../lib/host';
 import type { UiRequest } from '../lib/messages';
 import {
 	ALL_SITES_PATTERN,
 	isPatternGranted,
+	pendingCleanup,
 	shouldIgnoreHost,
-	type ExtensionState
+	unneededGrants
 } from '../lib/registration';
 import { createSerialQueue } from '../lib/serial';
-import {
-	addSite,
-	findSite,
-	mergeSites,
-	removeSite,
-	setSubdomains,
-	type Settings
-} from '../lib/settings';
+import { addSite, findSite, removeSite, setSubdomains, type Settings } from '../lib/settings';
 import type { TabStatus } from '../lib/tab-status';
-import { inspectTab, applyBadge, refreshBadges } from './badge';
-import { rememberGrant, takeGrantedAction } from './grants';
-import { clearFlag, setFlag, tabHost, tabsWhere } from './pages';
+import { applyBadge, inspectTab, refreshBadges } from './badge';
+import { pendingGrant, rememberGrant, takeGrantedAction } from './grants';
+import { clearFlag, pagesWhere, setFlag, tabHost } from './pages';
 import { reconcileRegistrations } from './registrar';
 import * as store from './store';
 
 export const serial = createSerialQueue();
 
+/**
+ * Sets or clears the flag in open tabs to match the current state. Only clears origins
+ * the extension flagged itself, so flags set by hand stay untouched.
+ */
 async function syncTabs(filter: (host: string) => boolean): Promise<void> {
 	const state = await store.loadState();
-	const tabIds = await tabsWhere(filter);
+	const flagged = new Set(state.flaggedOrigins);
+	const pages = await pagesWhere(filter);
+	const set: string[] = [];
+	const cleared: string[] = [];
+
 	await Promise.all(
-		tabIds.map(async (tabId) => {
-			const host = await tabHost(tabId);
-			if (!host) return;
-			await (shouldIgnoreHost(state, host) ? setFlag(tabId) : clearFlag(tabId));
+		pages.map(async ({ tabId, host, origin }) => {
+			if (shouldIgnoreHost(state, host)) {
+				const result = await setFlag(tabId, host);
+				if (result && 'changed' in result && result.changed) set.push(origin);
+			} else if (flagged.has(origin) && !state.testHosts.includes(host)) {
+				const result = await clearFlag(tabId, host);
+				if (result && 'value' in result && result.value === null) cleared.push(origin);
+			}
 		})
 	);
-	await refreshBadges(tabIds);
+
+	if (set.length > 0 || cleared.length > 0) {
+		await store.updateFlaggedOrigins((origins) => {
+			for (const origin of set) origins.add(origin);
+			for (const origin of cleared) origins.delete(origin);
+		});
+	}
+	await refreshBadges(pages.map((page) => page.tabId));
+}
+
+/** Drops host access nothing needs anymore. Keeps access a pending prompt is about to use. */
+async function pruneGrants(): Promise<void> {
+	const pending = await pendingGrant();
+	const unneeded = unneededGrants(await store.loadState(), pending ? requiredOrigins(pending) : []);
+	if (unneeded.length === 0) return;
+	try {
+		await chrome.permissions.remove({ origins: unneeded });
+	} catch {
+		// Required by the manifest or already gone.
+	}
+}
+
+/** Applies the current state everywhere: registrations, open tabs and host access. */
+async function settle(filter: (host: string) => boolean = () => true): Promise<void> {
+	await reconcileRegistrations();
+	await syncTabs(filter);
+	await pruneGrants();
+	await reconcileRegistrations();
 }
 
 async function updateSettings(change: (settings: Settings) => Settings): Promise<Settings> {
@@ -46,74 +80,40 @@ async function updateSettings(change: (settings: Settings) => Settings): Promise
 	return next;
 }
 
-async function removePermission(origins: string[]): Promise<void> {
-	try {
-		await chrome.permissions.remove({ origins });
-	} catch {
-		// Required or already removed.
-	}
-}
-
-async function hasPermission(origins: string[]): Promise<boolean> {
-	return chrome.permissions.contains({ origins });
+async function requireAccess(origins: string[], message: string): Promise<void> {
+	if (!(await chrome.permissions.contains({ origins }))) throw new Error(message);
 }
 
 async function enableSite(site: Site): Promise<void> {
-	if (!(await hasPermission(matchPatterns(site)))) throw new Error('Host access was not granted.');
+	await requireAccess(matchPatterns(site), 'Host access was not granted.');
 	await updateSettings((settings) => addSite(settings, site));
-	const cleanup = await store.loadCleanupSites();
-	await store.saveCleanupSites(cleanup.filter((entry) => !siteCoversHost(site, entry.host)));
-	await reconcileRegistrations();
-	await syncTabs((host) => siteCoversHost(site, host));
+	await settle((host) => siteCoversHost(site, host));
 }
 
 async function disableSite(host: string): Promise<void> {
-	const before = await store.loadSettings();
-	const site = before.sites.find((entry) => entry.host === host);
+	const site = (await store.loadSettings()).sites.find((entry) => entry.host === host);
 	if (!site) return;
 	await updateSettings((settings) => removeSite(settings, host));
-	await reconcileRegistrations();
-
-	const state = await store.loadState();
-	const covers = (h: string) => siteCoversHost(site, h);
-	const openTabs = await tabsWhere(covers);
-	await syncTabs(covers);
-
-	if (state.settings.global) return;
-	if (openTabs.length > 0) {
-		await removePermission(matchPatterns(site));
-	} else {
-		// Nothing open to clean right now. Keep access and clear the flag on the next visit.
-		await store.saveCleanupSites(mergeSites([...state.cleanupSites, site]));
-		await reconcileRegistrations();
-	}
+	await settle((h) => siteCoversHost(site, h));
 }
 
 async function setSiteSubdomains(host: string, enabled: boolean): Promise<void> {
-	const settings = await store.loadSettings();
-	const site = settings.sites.find((entry) => entry.host === host);
+	const site = (await store.loadSettings()).sites.find((entry) => entry.host === host);
 	if (!site) return;
-	const updated = { ...site, includeSubdomains: enabled };
-	if (enabled && !(await hasPermission(matchPatterns(updated)))) {
-		throw new Error('Host access for subdomains was not granted.');
+	if (enabled) {
+		await requireAccess(
+			matchPatterns({ ...site, includeSubdomains: true }),
+			'Host access for subdomains was not granted.'
+		);
 	}
 	await updateSettings((current) => setSubdomains(current, host, enabled));
-	await reconcileRegistrations();
-	await syncTabs((h) => siteCoversHost({ ...site, includeSubdomains: true }, h));
-	if (!enabled && !settings.global) await removePermission([`*://*.${host}/*`]);
+	await settle((h) => siteCoversHost({ ...site, includeSubdomains: true }, h));
 }
 
 async function setGlobal(enabled: boolean): Promise<void> {
-	if (enabled && !(await hasPermission([ALL_SITES_PATTERN]))) {
-		throw new Error('Access to all sites was not granted.');
-	}
+	if (enabled) await requireAccess([ALL_SITES_PATTERN], 'Access to all sites was not granted.');
 	await updateSettings((settings) => ({ ...settings, global: enabled }));
-	await reconcileRegistrations();
-	await syncTabs(() => true);
-	if (!enabled) {
-		await removePermission([ALL_SITES_PATTERN]);
-		await reconcileRegistrations();
-	}
+	await settle();
 }
 
 async function setEventLog(enabled: boolean): Promise<void> {
@@ -129,14 +129,16 @@ async function startTest(tabId: number): Promise<void> {
 		await store.saveTestEntries([...entries, { host, tabId }]);
 	}
 	await reconcileRegistrations();
-	await syncTabs((h) => h === host);
+	// The origin stays flagged: test mode only lifts the flag for a while.
+	const pages = await pagesWhere((h) => h === host);
+	await Promise.all(pages.map((page) => clearFlag(page.tabId, host)));
+	await refreshBadges(pages.map((page) => page.tabId));
 }
 
 async function stopTest(host: string): Promise<void> {
 	const entries = await store.loadTestEntries();
 	await store.saveTestEntries(entries.filter((entry) => entry.host !== host));
-	await reconcileRegistrations();
-	await syncTabs((h) => h === host);
+	await settle((h) => h === host);
 }
 
 async function importSites(sites: Site[]): Promise<{ added: number; needsAccess: string[] }> {
@@ -147,17 +149,33 @@ async function importSites(sites: Site[]): Promise<{ added: number; needsAccess:
 	const needsAccess = settings.sites
 		.filter((site) => !matchPatterns(site).every((pattern) => isPatternGranted(pattern, granted)))
 		.map((site) => site.host);
-	await reconcileRegistrations();
+	await settle();
 	return { added: sites.length, needsAccess };
+}
+
+/** Flagged origins that need cleanup but have no host access on this device. */
+async function leftovers(): Promise<string[]> {
+	const state = await store.loadState();
+	return pendingCleanup(state).filter(
+		(origin) => !isPatternGranted(`*://${new URL(origin).hostname}/*`, state.granted)
+	);
+}
+
+async function forgetLeftovers(): Promise<void> {
+	const forget = new Set(await leftovers());
+	await store.updateFlaggedOrigins((origins) => {
+		for (const origin of forget) origins.delete(origin);
+	});
 }
 
 async function tabStatus(tabId: number): Promise<TabStatus> {
 	const tab = await chrome.tabs.get(tabId);
-	const state: ExtensionState = await store.loadState();
+	const state = await store.loadState();
 	const inspection = await inspectTab(tabId, tab.url);
 	await applyBadge(tabId, inspection.status);
 	const { host } = inspection;
 	const site = host ? (findSite(state.settings, host) ?? null) : null;
+	const origin = host && tab.url ? new URL(tab.url).origin : null;
 	return {
 		tabId,
 		host,
@@ -169,7 +187,7 @@ async function tabStatus(tabId: number): Promise<TabStatus> {
 		globalGranted: isPatternGranted(ALL_SITES_PATTERN, state.granted),
 		shouldIgnore: host ? shouldIgnoreHost(state, host) : false,
 		testMode: host ? state.testHosts.includes(host) : false,
-		pendingCleanup: host ? state.cleanupSites.some((entry) => siteCoversHost(entry, host)) : false,
+		pendingCleanup: origin ? pendingCleanup(state).includes(origin) : false,
 		status: inspection.status,
 		flag: inspection.flag,
 		detection: inspection.detection,
@@ -182,6 +200,10 @@ export async function handleUiRequest(request: UiRequest): Promise<unknown> {
 	switch (request.type) {
 		case 'get-settings':
 			return store.loadSettings();
+		case 'get-leftovers':
+			return leftovers();
+		case 'forget-leftovers':
+			return serial(forgetLeftovers);
 		case 'get-tab-status':
 			return tabStatus(request.tabId);
 		case 'enable-site':
@@ -213,25 +235,29 @@ export async function completePendingGrant(): Promise<void> {
 	if (action) await handleUiRequest(action);
 }
 
+/** Settings changed on another device. Apply them here, including cleanup. */
+export async function onSettingsSynced(): Promise<void> {
+	await serial(() => settle());
+}
+
 export async function recordEvent(tabId: number, event: CapturedEvent): Promise<void> {
 	await serial(async () => {
 		const settings = await store.loadSettings();
 		if (!settings.eventLog) return;
-		await store.saveEvents(tabId, appendEvent(await store.loadEvents(tabId), event));
+		await store.saveEvents(tabId, appendEvent(await store.loadEvents(tabId), boundEvent(event)));
 	});
 }
 
-/** The cleanup script cleared the flag on this host. Drop the entry and its access. */
-export async function finishCleanup(host: string): Promise<void> {
+export async function recordFlagSet(origin: string): Promise<void> {
+	await serial(() => store.updateFlaggedOrigins((origins) => void origins.add(origin)));
+}
+
+/** The cleanup script cleared the flag on this origin. Forget it and drop unneeded access. */
+export async function finishCleanup(origin: string): Promise<void> {
 	await serial(async () => {
-		const cleanup = await store.loadCleanupSites();
-		const done = cleanup.filter((site) => site.host === host);
-		if (done.length === 0) return;
-		await store.saveCleanupSites(cleanup.filter((site) => site.host !== host));
-		const settings = await store.loadSettings();
-		if (!settings.global && !findSite(settings, host)) {
-			await removePermission(done.flatMap(matchPatterns));
-		}
+		await store.updateFlaggedOrigins((origins) => void origins.delete(origin));
+		await reconcileRegistrations();
+		await pruneGrants();
 		await reconcileRegistrations();
 	});
 }
@@ -244,9 +270,9 @@ export async function onTabRemoved(tabId: number): Promise<void> {
 		if (closing.length === 0) return;
 		const remaining = entries.filter((entry) => entry.tabId !== tabId);
 		await store.saveTestEntries(remaining);
-		await reconcileRegistrations();
-		for (const { host } of closing) {
-			if (!remaining.some((entry) => entry.host === host)) await syncTabs((h) => h === host);
-		}
+		const hosts = new Set(
+			closing.map((entry) => entry.host).filter((h) => !remaining.some((e) => e.host === h))
+		);
+		await settle((h) => hosts.has(h));
 	});
 }

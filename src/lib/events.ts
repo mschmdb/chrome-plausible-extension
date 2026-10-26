@@ -152,3 +152,37 @@ export function appendEvent(
 ): CapturedEvent[] {
 	return [event, ...log].slice(0, max);
 }
+
+/** Cap for single string fields. Above Plausible's URL limit, so the warning still fires. */
+export const MAX_FIELD_LENGTH = 4000;
+const MAX_OBJECT_BYTES = 8000;
+export const MAX_EVENT_BYTES = 32_000;
+
+const trim = (value: string) =>
+	value.length > MAX_FIELD_LENGTH ? `${value.slice(0, MAX_FIELD_LENGTH)}…` : value;
+const trimOrNull = (value: string | null) => (value === null ? null : trim(value));
+
+function boundObject(
+	value: Record<string, unknown> | null,
+	label: string
+): Record<string, unknown> | null {
+	if (value === null) return null;
+	return JSON.stringify(value).length > MAX_OBJECT_BYTES
+		? { '(dropped)': `${label} larger than 8 KB` }
+		: value;
+}
+
+/** Keeps page-controlled events small enough for session storage. */
+export function boundEvent(event: CapturedEvent): CapturedEvent {
+	return {
+		...event,
+		name: trimOrNull(event.name),
+		url: trim(event.url),
+		domain: trimOrNull(event.domain),
+		referrer: trimOrNull(event.referrer),
+		endpoint: trimOrNull(event.endpoint),
+		reason: trimOrNull(event.reason),
+		props: boundObject(event.props, 'Properties'),
+		revenue: boundObject(event.revenue, 'Revenue')
+	};
+}

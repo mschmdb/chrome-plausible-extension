@@ -11,6 +11,11 @@ export const STATUS_TEXT: Record<PageStatus, { title: string; detail: string }> 
 		title: 'Plausible counts your visits',
 		detail: 'This site runs Plausible and the ignore flag is not set.'
 	},
+	'tracker-blocked': {
+		title: 'Plausible did not run',
+		detail:
+			'The script is on the page but did not load. An ad blocker or a Content Security Policy may block it. Your visit is not counted right now.'
+	},
 	'not-detected': {
 		title: 'No Plausible script found',
 		detail: 'This page does not load Plausible, or it loads it later.'

@@ -4,5 +4,5 @@ import type { ContentMessage } from '../lib/messages';
 
 const result = clearFlagInPage();
 const message: ContentMessage =
-	'blocked' in result ? { type: 'flag-blocked' } : { type: 'flag-cleared' };
+	result && 'blocked' in result ? { type: 'flag-blocked' } : { type: 'flag-cleared' };
 chrome.runtime.sendMessage(message).catch(() => undefined);

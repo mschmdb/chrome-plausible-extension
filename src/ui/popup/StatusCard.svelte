@@ -13,6 +13,7 @@
 	const ICONS = {
 		ignored: CircleCheck,
 		counted: TriangleAlert,
+		'tracker-blocked': Ban,
 		'not-detected': CircleSlash,
 		'storage-blocked': Ban,
 		unsupported: CircleSlash,

@@ -3,7 +3,11 @@ import { setFlagInPage } from '../lib/flag';
 import type { ContentMessage } from '../lib/messages';
 
 const result = setFlagInPage();
-if ('blocked' in result) {
-	const message: ContentMessage = { type: 'flag-blocked' };
-	chrome.runtime.sendMessage(message).catch(() => undefined);
-}
+
+let message: ContentMessage | null = null;
+if (result && 'blocked' in result) message = { type: 'flag-blocked' };
+// Report only real changes. The service worker remembers the origin to clean it up later,
+// and a flag the user set by hand stays theirs.
+else if (result?.changed) message = { type: 'flag-set' };
+
+if (message) chrome.runtime.sendMessage(message).catch(() => undefined);

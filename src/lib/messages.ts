@@ -10,10 +10,15 @@ export interface ProbeMessage {
 }
 
 export type ContentMessage =
-	{ type: 'flag-blocked' } | { type: 'flag-cleared' } | { type: 'event'; event: CapturedEvent };
+	| { type: 'flag-set' }
+	| { type: 'flag-blocked' }
+	| { type: 'flag-cleared' }
+	| { type: 'event'; event: CapturedEvent };
 
 export type UiRequest =
 	| { type: 'get-settings' }
+	| { type: 'get-leftovers' }
+	| { type: 'forget-leftovers' }
 	| { type: 'get-tab-status'; tabId: number }
 	| { type: 'enable-site'; site: Site }
 	| { type: 'disable-site'; host: string }
@@ -50,6 +55,7 @@ export function isProbeMessage(value: unknown): value is ProbeMessage {
 export function isContentMessage(value: unknown): value is ContentMessage {
 	if (!isRecord(value)) return false;
 	switch (value.type) {
+		case 'flag-set':
 		case 'flag-blocked':
 		case 'flag-cleared':
 			return true;
@@ -80,6 +86,8 @@ export function isUiRequest(value: unknown): value is UiRequest {
 		case 'pending-grant':
 			return isGrantAction(value.action);
 		case 'get-settings':
+		case 'get-leftovers':
+		case 'forget-leftovers':
 			return true;
 		case 'get-tab-status':
 		case 'test-start':

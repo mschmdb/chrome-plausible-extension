@@ -65,9 +65,7 @@
 		</button>
 	</header>
 
-	{#if loadError}
-		<Notice tone="error"><p>{loadError}</p></Notice>
-	{:else if tab}
+	{#if tab}
 		<div aria-live="polite">
 			<StatusCard status={tab.status} host={tab.host} />
 		</div>
@@ -75,13 +73,13 @@
 		{#if tab.host}
 			<SiteControls tab={{ ...tab, host: tab.host }} {busy} {run} />
 		{/if}
-	{:else}
+	{:else if !loadError}
 		<p class="loading" role="status">Reading this tab…</p>
 	{/if}
 
 	<div role="alert">
-		{#if actionError}
-			<Notice tone="error"><p>{actionError}</p></Notice>
+		{#if loadError || actionError}
+			<Notice tone="error"><p>{loadError ?? actionError}</p></Notice>
 		{/if}
 	</div>
 </main>

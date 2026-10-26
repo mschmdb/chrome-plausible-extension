@@ -32,6 +32,13 @@ describe('pageStatus', () => {
 		);
 	});
 
+	it('does not claim counting when the tracker did not run', () => {
+		expect(pageStatus({ host: 'a.com', flag: { value: null }, detection: 'blocked' })).toBe(
+			'tracker-blocked'
+		);
+		expect(badgeFor('tracker-blocked').text).toBe('');
+	});
+
 	it('is not-detected without Plausible and without flag', () => {
 		expect(pageStatus({ host: 'a.com', flag: { value: null }, detection: 'none' })).toBe(
 			'not-detected'

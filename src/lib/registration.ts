@@ -23,8 +23,8 @@ export interface ExtensionState {
 	granted: readonly string[];
 	/** Hosts in test mode. The flag stays off there. */
 	testHosts: readonly string[];
-	/** Removed sites whose flag still needs to be cleared on the next visit. */
-	cleanupSites: readonly Site[];
+	/** Origins (scheme, host, port) where the extension set the flag and has not cleared it. */
+	flaggedOrigins: readonly string[];
 }
 
 function hostOfPattern(pattern: string): string | null {
@@ -97,12 +97,12 @@ export function planRegistrations(state: ExtensionState): PlannedScript[] {
 		plan.push(script('ignore', ignoreMatches, 'ISOLATED', testPatterns));
 	}
 
-	const cleanupMatches = state.cleanupSites
-		.filter((site) => isSiteGranted(site, state.granted))
-		.filter((site) => !global && !sites.some((active) => siteCoversHost(active, site.host)))
-		.flatMap(matchPatterns);
+	const cleanupMatches = pendingCleanup(state)
+		.map(originPattern)
+		.filter((pattern): pattern is string => pattern !== null)
+		.filter((pattern) => isPatternGranted(pattern, state.granted));
 	if (cleanupMatches.length > 0) {
-		plan.push(script('cleanup', cleanupMatches, 'ISOLATED'));
+		plan.push(script('cleanup', [...new Set(cleanupMatches)], 'ISOLATED'));
 	}
 
 	if (state.settings.eventLog && ignoreMatches.length > 0) {
@@ -117,6 +117,50 @@ export function planRegistrations(state: ExtensionState): PlannedScript[] {
 	}
 
 	return plan;
+}
+
+function parseOrigin(origin: string): URL | null {
+	try {
+		const url = new URL(origin);
+		return url.protocol === 'http:' || url.protocol === 'https:' ? url : null;
+	} catch {
+		return null;
+	}
+}
+
+/** Match pattern for one origin. Patterns cannot carry a port, so they cover all ports. */
+function originPattern(origin: string): string | null {
+	const url = parseOrigin(origin);
+	return url ? `${url.protocol}//${url.hostname}/*` : null;
+}
+
+/** Flagged origins that should lose the flag. Test hosts are handled by test mode. */
+export function pendingCleanup(state: ExtensionState): string[] {
+	return state.flaggedOrigins.filter((origin) => {
+		const host = parseOrigin(origin)?.hostname;
+		if (!host || state.testHosts.includes(host)) return false;
+		const wanted =
+			state.settings.global || state.settings.sites.some((s) => siteCoversHost(s, host));
+		return !wanted;
+	});
+}
+
+/**
+ * Host grants in this extension's own format that no setting and no pending cleanup needs.
+ * Access to all sites never stays for cleanup alone: users expect it gone with global mode.
+ */
+export function unneededGrants(state: ExtensionState, keep: readonly string[] = []): string[] {
+	const sitePatterns = new Set(state.settings.sites.flatMap(matchPatterns));
+	const cleanupPatterns = pendingCleanup(state)
+		.map(originPattern)
+		.filter((pattern): pattern is string => pattern !== null);
+
+	return state.granted.filter((grant) => {
+		if (!grant.startsWith('*://') || keep.includes(grant)) return false;
+		if (grant === ALL_SITES_PATTERN) return !state.settings.global;
+		if (sitePatterns.has(grant)) return false;
+		return !cleanupPatterns.some((pattern) => isPatternGranted(pattern, [grant]));
+	});
 }
 
 /** Whether the flag should be set on this host right now. */

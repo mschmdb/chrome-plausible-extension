@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
 	appendEvent,
+	boundEvent,
+	MAX_EVENT_BYTES,
+	MAX_FIELD_LENGTH,
 	classifyEvent,
 	isCapturedEvent,
 	parsePayload,
@@ -148,5 +151,25 @@ describe('appendEvent', () => {
 		const next = appendEvent(log, event({ time: 99 }), 3);
 		expect(next.map((e) => e.time)).toEqual([99, 0, 1]);
 		expect(log).toHaveLength(3);
+	});
+});
+
+describe('boundEvent', () => {
+	it('keeps normal events unchanged', () => {
+		const e = event({ props: { a: 1 } });
+		expect(boundEvent(e)).toEqual(e);
+	});
+
+	it('trims long strings and drops oversized props and revenue', () => {
+		const huge = 'x'.repeat(20_000);
+		const bounded = boundEvent(
+			event({ url: huge, name: huge, props: { a: huge }, revenue: { amount: huge }, reason: huge })
+		);
+		expect(bounded.url.length).toBeLessThanOrEqual(MAX_FIELD_LENGTH + 1);
+		expect(bounded.name?.length).toBeLessThanOrEqual(MAX_FIELD_LENGTH + 1);
+		expect(bounded.reason?.length).toBeLessThanOrEqual(MAX_FIELD_LENGTH + 1);
+		expect(bounded.props).toEqual({ '(dropped)': 'Properties larger than 8 KB' });
+		expect(bounded.revenue).toEqual({ '(dropped)': 'Revenue larger than 8 KB' });
+		expect(JSON.stringify(bounded).length).toBeLessThan(MAX_EVENT_BYTES);
 	});
 });

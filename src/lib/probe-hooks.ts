@@ -96,22 +96,24 @@ function hookXhr(win: ProbeWindow, report: Report): void {
 			const payload = typeof body === 'string' ? parsePayload(body) : null;
 			if (!payload) return;
 			const endpoint = urls.get(this) ?? null;
-			this.addEventListener('loadend', () => {
-				const ok = this.status >= 200 && this.status < 300;
-				let dropped: boolean | null = null;
-				safely(() => {
-					const value = this.getResponseHeader('x-plausible-dropped');
-					dropped = value === null ? null : value === '1';
-				});
-				report(
-					capture(payload, endpoint, 'xhr', {
-						outcome: ok ? 'sent' : 'failed',
-						reason: ok ? null : this.status === 0 ? 'Network error' : `HTTP ${this.status}`,
-						httpStatus: this.status || null,
-						dropped
-					})
-				);
-			});
+			// One listener per send, bound to this payload. Reusing the XHR adds a fresh one.
+			this.addEventListener(
+				'loadend',
+				() =>
+					safely(() => {
+						const ok = this.status >= 200 && this.status < 300;
+						const header = this.getResponseHeader('x-plausible-dropped');
+						report(
+							capture(payload, endpoint, 'xhr', {
+								outcome: ok ? 'sent' : 'failed',
+								reason: ok ? null : this.status === 0 ? 'Network error' : `HTTP ${this.status}`,
+								httpStatus: this.status || null,
+								dropped: header === null ? null : header === '1'
+							})
+						);
+					}),
+				{ once: true }
+			);
 		});
 		return originalSend.call(this, body);
 	};

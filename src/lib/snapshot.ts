@@ -13,6 +13,8 @@ export interface ScriptInfo {
 }
 
 export interface PageSnapshot {
+	/** Base for relative URLs such as `data-api`. The tracker's fetch resolves against it. */
+	pageUrl: string;
 	hostname: string;
 	protocol: string;
 	global: { present: boolean; loaded: boolean; version: string | null; lib: string | null };
@@ -76,6 +78,7 @@ export function collectSnapshot(): PageSnapshot {
 	}
 
 	return {
+		pageUrl: document.baseURI,
 		hostname: location.hostname,
 		protocol: location.protocol,
 		global: {
