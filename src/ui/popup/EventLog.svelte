@@ -36,7 +36,11 @@
 			{@const warnings = event.outcome === 'ignored' ? [] : validatePayload(event)}
 			<li class={event.outcome}>
 				<div class="head">
-					<span class="kind">{KIND_LABEL[classifyEvent(event.name)]}</span>
+					<span class="kind">
+						{event.outcome === 'ignored' && !event.name
+							? 'Skipped event'
+							: KIND_LABEL[classifyEvent(event.name)]}
+					</span>
 					{#if event.name && classifyEvent(event.name) === 'custom'}
 						<code>{event.name}</code>
 					{/if}
