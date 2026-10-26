@@ -2,7 +2,7 @@
 	"manifest_version": 3,
 	"name": "Ignore for Plausible",
 	"version": "0.0.0",
-	"description": "Exclude your own visits from Plausible Analytics, per site or everywhere.",
+	"description": "Unofficial helper for Plausible Analytics: exclude your own visits, per site or everywhere.",
 	"minimum_chrome_version": "120",
 	"permissions": ["storage", "scripting", "activeTab"],
 	"optional_host_permissions": ["*://*/*"],

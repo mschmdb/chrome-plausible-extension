@@ -98,9 +98,34 @@
 	{:else if !error}
 		<p role="status">Loading settings…</p>
 	{/if}
+	<footer>
+		<p>
+			Unofficial extension. Not made by, endorsed by or affiliated with
+			<a href="https://plausible.io" target="_blank" rel="noopener noreferrer"
+				>Plausible Analytics<span class="visually-hidden"> (opens in a new tab)</span></a
+			>. It uses the
+			<a
+				href="https://plausible.io/docs/excluding-localstorage"
+				target="_blank"
+				rel="noopener noreferrer"
+				>opt-out flag Plausible documents<span class="visually-hidden">
+					(opens in a new tab)</span
+				></a
+			>.
+		</p>
+	</footer>
 </main>
 
 <style>
+	footer {
+		padding-top: var(--space-4);
+		border-top: 1px solid var(--rule);
+		color: var(--ink-muted);
+		font-size: var(--text-sm);
+	}
+	footer a {
+		color: var(--accent);
+	}
 	main {
 		display: grid;
 		gap: var(--space-6);

@@ -8,6 +8,10 @@ Exclude the user's own visits from Plausible Analytics by setting Plausible's do
 
 Stop Plausible Analytics from counting your own visits. Per site or everywhere, with developer tools for debugging.
 
+## Disclaimer (first lines of the detailed description)
+
+Unofficial extension. Not made by, endorsed by or affiliated with Plausible Analytics (https://plausible.io) or Plausible Insights OÜ. It uses the opt-out flag Plausible documents at https://plausible.io/docs/excluding-localstorage.
+
 ## Permission justifications
 
 | Permission                       | Why                                                                                                                                        |

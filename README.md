@@ -2,6 +2,8 @@
 
 A browser extension that stops [Plausible Analytics](https://plausible.io) from counting your own visits. It sets `localStorage.plausible_ignore = "true"` on the sites you choose, before the Plausible script runs.
 
+> **Unofficial.** This extension is not made by, endorsed by or affiliated with [Plausible Analytics](https://plausible.io) or Plausible Insights OÜ. It only uses the opt-out flag that Plausible [documents](https://plausible.io/docs/excluding-localstorage).
+
 > **Status:** early development. Not yet in any store.
 
 ## Why
@@ -54,4 +56,4 @@ Architecture decisions live in [docs/adr](docs/adr). See [CONTRIBUTING.md](CONTR
 
 [MIT](LICENSE). The icon glyph comes from [Lucide](https://lucide.dev) (ISC license).
 
-Not affiliated with Plausible Insights OÜ.
+Plausible is a trademark of Plausible Insights OÜ. This project is independent.
