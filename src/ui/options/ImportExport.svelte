@@ -27,23 +27,31 @@
 		setTimeout(() => URL.revokeObjectURL(url), 0);
 	}
 
-	async function importFile(event: Event & { currentTarget: HTMLInputElement }) {
+	function importFile(event: Event & { currentTarget: HTMLInputElement }) {
 		const file = event.currentTarget.files?.[0];
 		event.currentTarget.value = '';
+		if (!file || busy) return;
 		result = null;
 		importError = null;
-		if (!file) return;
 		if (file.size > MAX_IMPORT_BYTES) {
 			importError = 'The file is larger than 1 MB.';
 			return;
 		}
 
-		const parsed = parseImport(await file.text());
-		if (!parsed.ok) {
-			importError = parsed.error;
-			return;
-		}
+		// Reading, parsing and saving share one busy phase, so imports never overlap.
 		run(async () => {
+			let text: string;
+			try {
+				text = await file.text();
+			} catch {
+				importError = 'The file could not be read.';
+				return;
+			}
+			const parsed = parseImport(text);
+			if (!parsed.ok) {
+				importError = parsed.error;
+				return;
+			}
 			const response = await send<{ added: number; needsAccess: string[] }>({
 				type: 'import-sites',
 				sites: parsed.sites
