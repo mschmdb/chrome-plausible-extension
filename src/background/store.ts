@@ -83,16 +83,28 @@ export async function loadState(): Promise<ExtensionState> {
 }
 
 const RECORDING_KEY = 'recordingDocuments';
-const MAX_RECORDING_DOCUMENTS = 50;
 
-/** Documents where the popup injected the probe by hand. A new page gets a new ID. */
-export async function loadRecordingDocuments(): Promise<string[]> {
+/**
+ * Document per tab where the popup injected the probe by hand. A tab shows one document
+ * at a time, so a new recording replaces the old entry, and closing the tab removes it.
+ */
+export async function loadRecordingDocuments(): Promise<Record<number, string>> {
 	const stored = await chrome.storage.session.get(RECORDING_KEY);
 	const raw: unknown = stored[RECORDING_KEY];
-	return Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string') : [];
+	if (typeof raw !== 'object' || raw === null) return {};
+	return Object.fromEntries(
+		Object.entries(raw).filter(
+			([tabId, documentId]) => Number.isInteger(Number(tabId)) && typeof documentId === 'string'
+		)
+	) as Record<number, string>;
 }
 
-export async function saveRecordingDocuments(documentIds: readonly string[]): Promise<void> {
-	const unique = [...new Set(documentIds)].slice(-MAX_RECORDING_DOCUMENTS);
-	await chrome.storage.session.set({ [RECORDING_KEY]: unique });
+export async function setRecordingDocument(
+	tabId: number,
+	documentId: string | null
+): Promise<void> {
+	const documents = await loadRecordingDocuments();
+	if (documentId) documents[tabId] = documentId;
+	else delete documents[tabId];
+	await chrome.storage.session.set({ [RECORDING_KEY]: documents });
 }

@@ -279,7 +279,7 @@ async function recordTab(tabId: number): Promise<void> {
 	} catch {
 		throw new Error('Recording could not start on this page. Reload it and try again.');
 	}
-	await store.saveRecordingDocuments([...(await store.loadRecordingDocuments()), documentId]);
+	await store.setRecordingDocument(tabId, documentId);
 }
 
 export async function recordEvent(
@@ -289,9 +289,8 @@ export async function recordEvent(
 ): Promise<void> {
 	await serial(async () => {
 		const settings = await store.loadSettings();
-		const recorded = documentId
-			? (await store.loadRecordingDocuments()).includes(documentId)
-			: false;
+		const recorded =
+			documentId !== undefined && (await store.loadRecordingDocuments())[tabId] === documentId;
 		if (!settings.eventLog && !recorded) return;
 		await store.saveEvents(tabId, appendEvent(await store.loadEvents(tabId), boundEvent(event)));
 	});
@@ -314,6 +313,7 @@ export async function finishCleanup(origin: string): Promise<void> {
 export async function onTabRemoved(tabId: number): Promise<void> {
 	await serial(async () => {
 		await store.clearEvents(tabId);
+		await store.setRecordingDocument(tabId, null);
 		const entries = await store.loadTestEntries();
 		const closing = entries.filter((entry) => entry.tabId === tabId);
 		if (closing.length === 0) return;
