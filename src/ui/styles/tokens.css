@@ -1,0 +1,62 @@
+/*
+  Design tokens from schmidbauer.dev, 1:1 as OKLCH.
+  Components use only these tokens, never raw colors.
+  Hex comments are the sRGB reference. contrast.test.ts checks every pair.
+*/
+:root {
+	color-scheme: light;
+	--bg: oklch(93.6% 0.014 97); /* #ECEAE0 */
+	--bg-elevated: oklch(96.3% 0.012 96); /* #F5F3EA */
+	--ink: oklch(19.1% 0 90); /* #141414 */
+	--ink-muted: oklch(40.8% 0.007 107); /* #4A4A46 */
+	--ink-subtle: oklch(48.4% 0.008 107); /* #5F5F5A */
+	--rule: oklch(82.5% 0.015 98); /* #C8C6BB */
+	--rule-strong: oklch(55.1% 0.012 95); /* #74726A */
+	--accent: oklch(47% 0.075 150); /* #3A6744 */
+	--accent-soft: oklch(92% 0.025 150);
+	--focus: oklch(41.7% 0.234 264); /* #0030C8 */
+	--error: oklch(46.9% 0.16 26); /* #A12626 */
+	--warning: oklch(52.7% 0.116 53); /* #9E5520 */
+	--success: oklch(45.1% 0.09 165); /* #0E6549 */
+}
+
+@media (prefers-color-scheme: dark) {
+	:root {
+		color-scheme: dark;
+		--bg: oklch(17.5% 0.01 97); /* #12110C */
+		--bg-elevated: oklch(22.5% 0.011 97); /* #1D1C16 */
+		--ink: oklch(93% 0.008 97); /* #E9E8E2 */
+		--ink-muted: oklch(76% 0.01 100); /* #B2B1AA */
+		--ink-subtle: oklch(62% 0.01 103); /* #878680 */
+		--rule: oklch(34% 0.012 97); /* #3A3831 */
+		--rule-strong: oklch(50% 0.014 96); /* #65635A */
+		--accent: oklch(80% 0.06 150); /* #A3C9AA */
+		--accent-soft: oklch(30% 0.04 150);
+		--focus: oklch(68% 0.18 264); /* #5E92FF */
+		--error: oklch(68% 0.15 26); /* #E66F66 */
+		--warning: oklch(76% 0.12 70); /* #E2A355 */
+		--success: oklch(70% 0.11 165); /* #51B48D */
+	}
+}
+
+:root {
+	--font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+	--font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+	--text-xs: 0.8rem;
+	--text-sm: 0.875rem;
+	--text-base: 1rem;
+	--text-lg: 1.25rem;
+	--leading-body: 1.45;
+
+	--space-1: 0.25rem;
+	--space-2: 0.5rem;
+	--space-3: 0.75rem;
+	--space-4: 1rem;
+	--space-6: 1.5rem;
+
+	--radius-xs: 2px;
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--radius-lg: 8px;
+}
