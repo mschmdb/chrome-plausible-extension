@@ -1,0 +1,9 @@
+import axe from 'axe-core';
+import { expect } from 'vitest';
+
+export async function expectNoAxeViolations(container: Element): Promise<void> {
+	const results = await axe.run(container, {
+		runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] }
+	});
+	expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
+}

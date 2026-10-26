@@ -7,7 +7,10 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { build } from 'vite';
 
 const root = resolve(import.meta.dirname, '..');
-const outDir = resolve(root, 'dist');
+// --e2e builds a test copy that is pre-granted access to *.test hosts. Playwright cannot
+// click Chrome's permission prompt. Never ship this build.
+const e2e = process.argv.includes('--e2e');
+const outDir = resolve(root, e2e ? 'dist-e2e' : 'dist');
 const contentScripts = ['ignore', 'cleanup', 'probe', 'relay'];
 
 await rm(outDir, { recursive: true, force: true });
@@ -54,5 +57,6 @@ for (const name of contentScripts) {
 const pkg = JSON.parse(await readFile(resolve(root, 'package.json'), 'utf8'));
 const manifest = JSON.parse(await readFile(resolve(root, 'src/manifest.json'), 'utf8'));
 manifest.version = pkg.version;
+if (e2e) manifest.host_permissions = ['*://*.test/*'];
 await writeFile(resolve(outDir, 'manifest.json'), JSON.stringify(manifest, null, '\t') + '\n');
 await cp(resolve(root, 'static'), outDir, { recursive: true });

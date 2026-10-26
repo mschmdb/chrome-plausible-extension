@@ -39,5 +39,14 @@ export default defineConfig(
 	{
 		files: ['scripts/**'],
 		rules: { 'no-console': 'off' }
+	},
+	{
+		// Playwright fixtures need an empty destructuring pattern.
+		files: ['e2e/**/*.ts'],
+		rules: { 'no-empty-pattern': 'off' }
+	},
+	{
+		// Stand-in for the third-party Plausible tracker, written like the original.
+		ignores: ['e2e/fixtures/**']
 	}
 );

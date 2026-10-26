@@ -12,14 +12,14 @@ export default defineConfig({
 					name: 'unit',
 					environment: 'node',
 					include: ['src/**/*.test.ts'],
-					exclude: ['src/**/*.svelte.test.ts']
+					exclude: ['src/**/*.svelte.test.ts', 'src/**/*.browser.test.ts']
 				}
 			},
 			{
 				extends: true,
 				test: {
 					name: 'browser',
-					include: ['src/**/*.svelte.test.ts'],
+					include: ['src/**/*.svelte.test.ts', 'src/**/*.browser.test.ts'],
 					browser: {
 						enabled: true,
 						provider: playwright(),

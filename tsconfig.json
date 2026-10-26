@@ -1,9 +1,9 @@
 {
 	"compilerOptions": {
-		"target": "ES2022",
+		"target": "ES2023",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"lib": ["ES2023", "DOM", "DOM.Iterable"],
 		"types": ["chrome", "node", "svelte"],
 		"strict": true,
 		"noUncheckedIndexedAccess": true,
@@ -16,5 +16,6 @@
 		"allowJs": true,
 		"checkJs": true
 	},
-	"include": ["src", "scripts", "*.config.ts", "*.config.js"]
+	"include": ["src", "scripts", "e2e", "*.config.ts", "*.config.js"],
+	"exclude": ["e2e/fixtures"]
 }
