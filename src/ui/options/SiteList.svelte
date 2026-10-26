@@ -53,10 +53,14 @@
 </script>
 
 <section aria-labelledby="sites-title">
-	<h2 id="sites-title">Sites</h2>
+	<h2 id="sites-title">Ignored sites</h2>
+	<p class="hint">
+		Plausible ignores your visits on these sites. The extension sets the ignore flag on every visit,
+		before Plausible loads. Chrome grants the extension access per site and per device.
+	</p>
 
 	<form onsubmit={addSite} novalidate>
-		<label for="new-host">Add a site</label>
+		<label for="new-host">Add a site to ignore</label>
 		<div class="row">
 			<input
 				id="new-host"
@@ -69,7 +73,7 @@
 				aria-invalid={inputError ? 'true' : undefined}
 				aria-describedby={inputError ? 'new-host-error' : undefined}
 			/>
-			<button type="submit" class="button primary" disabled={busy}>Add</button>
+			<button type="submit" class="button primary" disabled={busy}>Ignore site</button>
 		</div>
 		{#if inputError}
 			<p id="new-host-error" class="error">{inputError}</p>
@@ -78,7 +82,9 @@
 
 	{#if missing.length > 1}
 		<div class="bulk">
-			<p>{missing.length} sites have no access on this device, so their flag is not set.</p>
+			<p>
+				{missing.length} sites need access on this device. Until then the flag is not set there.
+			</p>
 			<button type="button" class="button" disabled={busy} onclick={grantMissing}>
 				Grant access to {missing.length} sites
 			</button>
@@ -86,15 +92,17 @@
 	{/if}
 
 	{#if sites.length === 0}
-		<p class="empty">No sites yet. Add one here or use the toolbar button on a site.</p>
+		<p class="empty">
+			No ignored sites yet. Add one here, or open a site and use the toolbar button.
+		</p>
 	{:else}
 		<table>
 			<caption class="visually-hidden">Sites where your visits are ignored</caption>
 			<thead>
 				<tr>
 					<th scope="col">Host</th>
-					<th scope="col">Subdomains</th>
-					<th scope="col">Access on this device</th>
+					<th scope="col">Include subdomains</th>
+					<th scope="col">Status</th>
 					<th scope="col"><span class="visually-hidden">Actions</span></th>
 				</tr>
 			</thead>
@@ -113,8 +121,9 @@
 						</td>
 						<td>
 							{#if hasAccess(site)}
-								Granted
+								<span class="status active">Active</span>
 							{:else}
+								<span class="status">Needs access</span>
 								<button
 									type="button"
 									class="button"
@@ -133,7 +142,7 @@
 								onclick={() => run(() => send({ type: 'disable-site', host: site.host }))}
 							>
 								<Trash size={14} aria-hidden="true" />
-								Remove <span class="visually-hidden">{site.host}</span>
+								Stop ignoring <span class="visually-hidden">{site.host}</span>
 							</button>
 						</td>
 					</tr>
@@ -194,6 +203,20 @@
 	}
 	.bulk p {
 		margin: 0;
+	}
+	.hint {
+		margin: 0;
+		color: var(--ink-muted);
+		font-size: var(--text-sm);
+	}
+	.status {
+		display: block;
+		margin-bottom: var(--space-1);
+		color: var(--warning);
+	}
+	.status.active {
+		margin: 0;
+		color: var(--success);
 	}
 	.empty {
 		margin: 0;

@@ -102,7 +102,7 @@ test('ignores the first pageview after enabling a site', async ({ site, server, 
 
 test('lists the site with access in the options page', async ({ options }) => {
 	await options.reload();
-	await expect(options.getByRole('row', { name: /site\.test/ })).toContainText('Granted');
+	await expect(options.getByRole('row', { name: /site\.test/ })).toContainText('Active');
 	const results = await new AxeBuilder({ page: options })
 		.withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
 		.analyze();
@@ -231,7 +231,7 @@ test('imports a site list from a file', async ({ options }) => {
 	});
 	await expect(options.getByRole('status')).toContainText('Imported 1 site');
 	await expect(options.getByRole('status')).toContainText('Skipped 1 invalid entry');
-	await expect(options.getByRole('row', { name: /imported\.test/ })).toContainText('Granted');
+	await expect(options.getByRole('row', { name: /imported\.test/ })).toContainText('Active');
 
 	const results = await new AxeBuilder({ page: options })
 		.withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa'])
