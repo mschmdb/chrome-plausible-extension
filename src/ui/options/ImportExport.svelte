@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Download, Upload } from '@lucide/svelte';
 	import { matchPatterns, type Site } from '../../lib/host';
-	import { exportSites, parseImport } from '../../lib/site-io';
+	import { MAX_IMPORT_BYTES, exportSites, parseImport } from '../../lib/site-io';
 	import { send } from '../client';
 	import Notice from '../components/Notice.svelte';
 
@@ -33,6 +33,10 @@
 		result = null;
 		importError = null;
 		if (!file) return;
+		if (file.size > MAX_IMPORT_BYTES) {
+			importError = 'The file is larger than 1 MB.';
+			return;
+		}
 
 		const parsed = parseImport(await file.text());
 		if (!parsed.ok) {

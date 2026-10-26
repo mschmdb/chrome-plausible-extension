@@ -69,6 +69,15 @@ describe('parseImport', () => {
 		expect(parseImport(json)).toEqual({ ok: false, error });
 	});
 
+	it('describes odd entries without calling their methods', () => {
+		const json = '[{"host":{"toString":null}}, {"host": [1]}, {"host": null}, 3]';
+		expect(parseImport(json)).toEqual({
+			ok: true,
+			sites: [],
+			skipped: ['(object)', '(list)', 'null', '3']
+		});
+	});
+
 	it('rejects oversized files', () => {
 		expect(parseImport(' '.repeat(1_000_001))).toEqual({
 			ok: false,

@@ -2,7 +2,7 @@ import { normalizeHost, type Site } from './host';
 import { mergeSites } from './settings';
 
 export const EXPORT_FORMAT = 'ignore-for-plausible/sites';
-const MAX_BYTES = 1_000_000;
+export const MAX_IMPORT_BYTES = 1_000_000;
 
 export type ImportResult =
 	{ ok: true; sites: Site[]; skipped: string[] } | { ok: false; error: string };
@@ -29,11 +29,17 @@ function parseEntry(entry: unknown): Site | null {
 	return normalized ? { host: normalized, includeSubdomains: includeSubdomains === true } : null;
 }
 
+/** Describes an invalid entry for the user. Never calls methods on imported values. */
 function describeEntry(entry: unknown): string {
-	if (typeof entry === 'object' && entry !== null && 'host' in entry) {
-		return String((entry as { host: unknown }).host);
+	const value =
+		typeof entry === 'object' && entry !== null && !Array.isArray(entry) && 'host' in entry
+			? (entry as { host: unknown }).host
+			: entry;
+	if (typeof value === 'string') return entry === value ? JSON.stringify(value) : value;
+	if (typeof value === 'number' || typeof value === 'boolean' || value === null) {
+		return String(value);
 	}
-	return JSON.stringify(entry) ?? String(entry);
+	return Array.isArray(value) ? '(list)' : `(${typeof value})`;
 }
 
 function collect(entries: unknown[], allowStrings: boolean): ImportResult {
@@ -49,7 +55,7 @@ function collect(entries: unknown[], allowStrings: boolean): ImportResult {
 
 /** Accepts an export file or a plain JSON list of host names. */
 export function parseImport(json: string): ImportResult {
-	if (json.length > MAX_BYTES) return { ok: false, error: 'The file is larger than 1 MB.' };
+	if (json.length > MAX_IMPORT_BYTES) return { ok: false, error: 'The file is larger than 1 MB.' };
 
 	let data: unknown;
 	try {
