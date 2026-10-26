@@ -1,4 +1,4 @@
-// Zips dist/ for the Chrome Web Store. Run `pnpm build` first.
+// Zips dist/ for the Chrome Web Store. Run `pnpm build` first. Needs the `zip` command.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -16,4 +16,4 @@ mkdirSync(outDir, { recursive: true });
 rmSync(target, { force: true });
 
 execFileSync('zip', ['-r', '-X', '-q', target, '.'], { cwd: dist, stdio: 'inherit' });
-console.log(`Wrote ${target}`);
+process.stdout.write(`Wrote ${target}\n`);

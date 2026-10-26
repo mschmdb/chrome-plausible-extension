@@ -16,7 +16,7 @@ try {
 		const target = resolve(root, `static/icons/icon-${size}.png`);
 		await page.screenshot({ path: target, omitBackground: true });
 		await page.close();
-		console.log(`Wrote ${target}`);
+		process.stdout.write(`Wrote ${target}\n`);
 	}
 } finally {
 	await browser.close();

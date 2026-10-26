@@ -34,7 +34,7 @@ See [PRIVACY.md](PRIVACY.md).
 
 ## Development
 
-Requires Node 24 and pnpm.
+Requires Node 24 and pnpm. `pnpm package` also needs the `zip` command (preinstalled on macOS and most Linux distributions).
 
 ```sh
 pnpm install
