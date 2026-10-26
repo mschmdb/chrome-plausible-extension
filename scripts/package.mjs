@@ -11,7 +11,7 @@ if (!existsSync(resolve(dist, 'manifest.json'))) {
 
 const { version } = JSON.parse(readFileSync(resolve(dist, 'manifest.json'), 'utf8'));
 const outDir = resolve(root, 'release');
-const target = resolve(outDir, `ignore-for-plausible-${version}.zip`);
+const target = resolve(outDir, `uncounted-${version}.zip`);
 mkdirSync(outDir, { recursive: true });
 rmSync(target, { force: true });
 

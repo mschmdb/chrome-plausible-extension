@@ -56,7 +56,7 @@
 
 <main>
 	<header>
-		<h1>Ignore for Plausible</h1>
+		<h1>Uncounted</h1>
 		<button
 			type="button"
 			class="icon-button"

@@ -61,7 +61,7 @@
 
 <main>
 	<header>
-		<h1>Ignore for Plausible</h1>
+		<h1>Uncounted</h1>
 		<p>
 			Sets <code>localStorage.plausible_ignore</code> so Plausible Analytics skips your own visits. No
 			data leaves your browser.

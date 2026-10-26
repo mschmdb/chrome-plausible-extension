@@ -1,4 +1,6 @@
-# Ignore for Plausible (working title)
+# Uncounted
+
+Exclude your own visits from Plausible Analytics.
 
 A browser extension that stops [Plausible Analytics](https://plausible.io) from counting your own visits. It sets `localStorage.plausible_ignore = "true"` on the sites you choose, before the Plausible script runs.
 

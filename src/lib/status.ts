@@ -41,7 +41,7 @@ export interface Badge {
 	title: string;
 }
 
-const NAME = 'Ignore for Plausible';
+const NAME = 'Uncounted';
 
 export function badgeFor(status: PageStatus): Badge {
 	switch (status) {

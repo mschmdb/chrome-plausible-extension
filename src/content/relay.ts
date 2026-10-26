@@ -5,7 +5,7 @@ import { safeSend } from '../lib/safe-send';
 
 // The isolated world keeps globals between injections, so this guard prevents a second
 // listener when the popup injects the relay into a page that already has it.
-const scope = globalThis as unknown as { ignoreForPlausibleRelay?: boolean };
+const scope = globalThis as unknown as { uncountedRelay?: boolean };
 
 function relay(event: MessageEvent<unknown>): void {
 	if (event.source !== window || !isProbeMessage(event.data)) return;
@@ -13,11 +13,11 @@ function relay(event: MessageEvent<unknown>): void {
 	if (!safeSend(message)) {
 		// The extension was reloaded. Stop listening and let a new relay take over.
 		window.removeEventListener('message', relay);
-		scope.ignoreForPlausibleRelay = false;
+		scope.uncountedRelay = false;
 	}
 }
 
-if (!scope.ignoreForPlausibleRelay) {
-	scope.ignoreForPlausibleRelay = true;
+if (!scope.uncountedRelay) {
+	scope.uncountedRelay = true;
 	window.addEventListener('message', relay);
 }

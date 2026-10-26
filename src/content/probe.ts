@@ -4,7 +4,7 @@ import { installProbe } from '../lib/probe-hooks';
 import { PROBE_SOURCE, type ProbeMessage } from '../lib/messages';
 
 // Installing twice would report every event twice.
-const INSTALLED = Symbol.for('ignore-for-plausible.probe');
+const INSTALLED = Symbol.for('uncounted.probe');
 const marked = window as unknown as Record<symbol, boolean>;
 
 if (!marked[INSTALLED]) {

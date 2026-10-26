@@ -58,13 +58,13 @@ describe('parseImport', () => {
 	it.each([
 		['', 'The file is not valid JSON.'],
 		['{', 'The file is not valid JSON.'],
-		['{"format":"other","version":1,"sites":[]}', 'This is not an Ignore for Plausible export.'],
+		['{"format":"other","version":1,"sites":[]}', 'This is not an Uncounted export.'],
 		[
 			`{"format":"${EXPORT_FORMAT}","version":2,"sites":[]}`,
 			'This export version is not supported.'
 		],
 		[`{"format":"${EXPORT_FORMAT}","version":1}`, 'The export has no site list.'],
-		['"a.com"', 'This is not an Ignore for Plausible export.']
+		['"a.com"', 'This is not an Uncounted export.']
 	])('rejects %j', (json, error) => {
 		expect(parseImport(json)).toEqual({ ok: false, error });
 	});

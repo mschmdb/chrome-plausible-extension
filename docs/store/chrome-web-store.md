@@ -1,5 +1,11 @@
 # Chrome Web Store listing (draft)
 
+## Name
+
+Uncounted
+
+The name avoids the Plausible trademark (https://plausible.io/trademark). Plausible appears only in factual descriptions, never more prominently than the product name.
+
 ## Single purpose
 
 Exclude the user's own visits from Plausible Analytics by setting Plausible's documented `plausible_ignore` localStorage flag on sites the user chooses.
@@ -31,7 +37,6 @@ The extension collects no user data. Nothing to declare.
 
 ## Open points before submission
 
-- Final name and trademark check (see #12)
 - Final icon (#18)
 - Screenshots (1280×800): popup on a site with Plausible, developer tools, options page
 - Developer account registration

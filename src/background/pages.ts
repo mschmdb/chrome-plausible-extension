@@ -64,9 +64,7 @@ export async function tabHost(tabId: number): Promise<string | null> {
 }
 
 function probeInstalledInPage(): boolean {
-	return Boolean(
-		(window as unknown as Record<symbol, unknown>)[Symbol.for('ignore-for-plausible.probe')]
-	);
+	return Boolean((window as unknown as Record<symbol, unknown>)[Symbol.for('uncounted.probe')]);
 }
 
 /** Whether the event probe runs in the tab's current page. */

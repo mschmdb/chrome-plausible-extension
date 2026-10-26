@@ -2,7 +2,7 @@ import { isCapturedEvent, type CapturedEvent } from './events';
 import { normalizeHost, type Site } from './host';
 
 /** Tag for window messages from the MAIN-world probe to the relay content script. */
-export const PROBE_SOURCE = 'ignore-for-plausible:probe';
+export const PROBE_SOURCE = 'uncounted:probe';
 
 export interface ProbeMessage {
 	source: typeof PROBE_SOURCE;

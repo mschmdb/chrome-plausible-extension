@@ -238,7 +238,7 @@ test('imports a site list from a file', async ({ options }) => {
 		mimeType: 'application/json',
 		buffer: Buffer.from(
 			JSON.stringify({
-				format: 'ignore-for-plausible/sites',
+				format: 'uncounted/sites',
 				version: 1,
 				sites: [{ host: 'imported.test', includeSubdomains: true }, { host: 'bad host' }]
 			})

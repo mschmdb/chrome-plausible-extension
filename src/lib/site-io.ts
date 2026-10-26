@@ -1,7 +1,7 @@
 import { normalizeHost, type Site } from './host';
 import { mergeSites } from './settings';
 
-export const EXPORT_FORMAT = 'ignore-for-plausible/sites';
+export const EXPORT_FORMAT = 'uncounted/sites';
 export const MAX_IMPORT_BYTES = 1_000_000;
 
 export type ImportResult =
@@ -66,12 +66,12 @@ export function parseImport(json: string): ImportResult {
 
 	if (Array.isArray(data)) return collect(data, true);
 	if (typeof data !== 'object' || data === null) {
-		return { ok: false, error: 'This is not an Ignore for Plausible export.' };
+		return { ok: false, error: 'This is not an Uncounted export.' };
 	}
 
 	const { format, version, sites } = data as Record<string, unknown>;
 	if (format !== EXPORT_FORMAT) {
-		return { ok: false, error: 'This is not an Ignore for Plausible export.' };
+		return { ok: false, error: 'This is not an Uncounted export.' };
 	}
 	if (version !== 1) return { ok: false, error: 'This export version is not supported.' };
 	if (!Array.isArray(sites)) return { ok: false, error: 'The export has no site list.' };
