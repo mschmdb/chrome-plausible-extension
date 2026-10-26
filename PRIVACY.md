@@ -21,4 +21,4 @@ None. The extension makes no network requests of its own.
 
 ## Contact
 
-Open an issue at https://github.com/mschmdb/chrome-plausible-extension/issues.
+Matthias Schmidbauer, see https://schmidbauer.dev/imprint. For questions about this extension, open an issue at https://github.com/mschmdb/chrome-plausible-extension/issues.
