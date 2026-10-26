@@ -88,7 +88,7 @@
 			<h2 id="dev-title">Developer tools</h2>
 			<Switch
 				label="Record Plausible events"
-				description="Watches network requests to Plausible on enabled sites and lists them in the popup. Nothing leaves your browser. Reload open pages after turning it on."
+				description="Watches network requests to Plausible on ignored sites and lists them in the popup. Nothing leaves your browser. Reload open pages after turning it on."
 				checked={settings.eventLog}
 				disabled={busy}
 				{busy}

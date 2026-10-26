@@ -100,7 +100,7 @@
 			{#if !tab.eventLog}
 				<p class="muted">
 					To record from the first pageview on, turn on the event log. It then runs on every site
-					you enabled.
+					you ignore.
 				</p>
 				<button
 					type="button"
@@ -108,7 +108,7 @@
 					disabled={busy}
 					onclick={() => run(() => send({ type: 'set-event-log', enabled: true }))}
 				>
-					Turn on event log for enabled sites
+					Turn on event log for ignored sites
 				</button>
 			{/if}
 		</section>
