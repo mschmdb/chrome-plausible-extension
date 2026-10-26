@@ -82,15 +82,17 @@ export async function loadState(): Promise<ExtensionState> {
 	};
 }
 
-const RECORDING_KEY = 'recordingTabs';
+const RECORDING_KEY = 'recordingDocuments';
+const MAX_RECORDING_DOCUMENTS = 50;
 
-/** Tabs where the popup injected the probe by hand. Cleared on navigation and close. */
-export async function loadRecordingTabs(): Promise<number[]> {
+/** Documents where the popup injected the probe by hand. A new page gets a new ID. */
+export async function loadRecordingDocuments(): Promise<string[]> {
 	const stored = await chrome.storage.session.get(RECORDING_KEY);
 	const raw: unknown = stored[RECORDING_KEY];
-	return Array.isArray(raw) ? raw.filter((id): id is number => Number.isInteger(id)) : [];
+	return Array.isArray(raw) ? raw.filter((id): id is string => typeof id === 'string') : [];
 }
 
-export async function saveRecordingTabs(tabIds: readonly number[]): Promise<void> {
-	await chrome.storage.session.set({ [RECORDING_KEY]: [...new Set(tabIds)] });
+export async function saveRecordingDocuments(documentIds: readonly string[]): Promise<void> {
+	const unique = [...new Set(documentIds)].slice(-MAX_RECORDING_DOCUMENTS);
+	await chrome.storage.session.set({ [RECORDING_KEY]: unique });
 }

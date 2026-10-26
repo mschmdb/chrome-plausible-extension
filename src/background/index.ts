@@ -45,7 +45,7 @@ function handleContentMessage(message: unknown, sender: chrome.runtime.MessageSe
 	const origin = senderOrigin(sender);
 	switch (message.type) {
 		case 'event':
-			void recordEvent(tabId, message.event).catch(() => undefined);
+			void recordEvent(tabId, sender.documentId, message.event).catch(() => undefined);
 			return;
 		case 'flag-set':
 			if (origin) void recordFlagSet(origin).catch(() => undefined);

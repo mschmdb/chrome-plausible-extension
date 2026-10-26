@@ -266,4 +266,17 @@ test('records events on a page that is not enabled', async ({ site, options, sw 
 			return { recording: status.recording, names: status.events.map((e) => e.name) };
 		})
 		.toEqual({ recording: true, names: ['Explore'] });
+
+	// A reload starts a new document: recording ends and nothing new is logged.
+	await page.reload();
+	await page.evaluate(() =>
+		(window as unknown as { plausible: (n: string) => void }).plausible('Later')
+	);
+	await page.waitForTimeout(300);
+	const after = (await send(options, { type: 'get-tab-status', tabId })) as {
+		recording: boolean;
+		events: { name: string | null }[];
+	};
+	expect(after.recording).toBe(false);
+	expect(after.events.map((e) => e.name)).toEqual(['Explore']);
 });
