@@ -135,6 +135,21 @@ test('records ignored events in the event log', async ({ site, options, sw }) =>
 			return status.events[0];
 		})
 		.toMatchObject({ outcome: 'ignored', reason: 'localStorage flag' });
+
+	// A skipped call from the page carries its name and props.
+	await page.evaluate(() =>
+		(window as unknown as { plausible: (n: string, o: object) => void }).plausible('Explore', {
+			props: { zoom: 14 }
+		})
+	);
+	await expect
+		.poll(async () => {
+			const status = (await send(options, { type: 'get-tab-status', tabId })) as {
+				events: { name: string | null; props: unknown; outcome: string }[];
+			};
+			return status.events[0];
+		})
+		.toMatchObject({ name: 'Explore', props: { zoom: 14 }, outcome: 'ignored' });
 });
 
 test('test mode lifts the flag until it stops', async ({ site, server, options, sw }) => {

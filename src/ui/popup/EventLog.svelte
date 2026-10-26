@@ -21,7 +21,7 @@
 	const time = new Intl.DateTimeFormat(undefined, { timeStyle: 'medium' });
 
 	function title(event: CapturedEvent): string {
-		if (event.outcome === 'ignored' && !event.name) return 'Skipped event';
+		if (event.outcome === 'ignored' && !event.name) return 'Pageview or automatic event';
 		const kind = classifyEvent(event.name);
 		return kind === 'custom' && event.name ? event.name : KIND_LABEL[kind];
 	}
@@ -59,8 +59,10 @@
 						{/if}
 					</summary>
 					<dl>
-						<dt>Type</dt>
-						<dd>{KIND_LABEL[classifyEvent(event.name)]}</dd>
+						{#if event.name}
+							<dt>Type</dt>
+							<dd>{KIND_LABEL[classifyEvent(event.name)]}</dd>
+						{/if}
 						<dt>Result</dt>
 						<dd>{outcomeText(event)}</dd>
 						{#if event.outcome !== 'ignored'}

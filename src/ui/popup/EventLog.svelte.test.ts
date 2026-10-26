@@ -46,7 +46,7 @@ describe('EventLog', () => {
 			}
 		});
 		await expect.element(page.getByText('Signup')).toBeVisible();
-		await expect.element(page.getByText('Skipped event')).toBeVisible();
+		await expect.element(page.getByText('Pageview or automatic event')).toBeVisible();
 		await expect.element(page.getByText('Dropped', { exact: true })).toBeVisible();
 		await expect.element(page.getByText('Failed', { exact: true })).toBeVisible();
 		await expect.element(page.getByText('/pricing').first()).toBeVisible();

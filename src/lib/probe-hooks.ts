@@ -1,6 +1,7 @@
 // Observes Plausible traffic in the page's MAIN world. Every hook calls the original
 // first and never changes arguments, return values or errors seen by the page.
 import { parsePayload, type CapturedEvent, type ParsedPayload, type Transport } from './events';
+import { trackPlausibleCalls, type PlausibleCall } from './plausible-calls';
 
 export type Report = (event: CapturedEvent) => void;
 
@@ -141,20 +142,27 @@ function hookBeacon(win: ProbeWindow, report: Report): void {
 	};
 }
 
-function hookConsole(win: ProbeWindow, report: Report): void {
+function hookConsole(
+	win: ProbeWindow,
+	report: Report,
+	currentCall: () => PlausibleCall | null
+): void {
 	const original = win.console.warn;
 	win.console.warn = function (this: Console, ...args: unknown[]) {
 		safely(() => {
 			const [first] = args;
 			if (typeof first !== 'string' || !first.startsWith(IGNORE_PREFIX)) return;
+			// The warning fires inside the tracker call, so a running page call is the source.
+			// Without one, the tracker skipped an event of its own, usually the pageview.
+			const call = currentCall();
 			report({
-				name: null,
-				url: win.location.href,
+				name: call?.name ?? null,
+				url: call?.url ?? win.location.href,
 				domain: null,
 				referrer: null,
-				props: null,
-				revenue: null,
-				interactive: true,
+				props: call?.props ?? null,
+				revenue: call?.revenue ?? null,
+				interactive: call?.interactive ?? true,
 				endpoint: null,
 				transport: 'console',
 				outcome: 'ignored',
@@ -169,8 +177,12 @@ function hookConsole(win: ProbeWindow, report: Report): void {
 }
 
 export function installProbe(win: ProbeWindow, report: Report): void {
+	let currentCall: () => PlausibleCall | null = () => null;
+	safely(() => {
+		currentCall = trackPlausibleCalls(win);
+	});
 	hookFetch(win, report);
 	hookXhr(win, report);
 	hookBeacon(win, report);
-	hookConsole(win, report);
+	hookConsole(win, report, () => currentCall());
 }

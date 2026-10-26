@@ -111,3 +111,30 @@ describe('installProbe with XMLHttpRequest', () => {
 		expect(events[0]?.transport).toBe('xhr');
 	});
 });
+
+describe('installProbe with plausible() calls', () => {
+	it('names an ignored event after the page call that caused it', () => {
+		const events: CapturedEvent[] = [];
+		const warn = vi.fn();
+		const win = {
+			fetch,
+			XMLHttpRequest,
+			navigator: {} as Navigator,
+			console: { warn } as unknown as Console,
+			location: { href: 'https://site.test/map' } as Location
+		} as Parameters<typeof installProbe>[0] & { plausible?: unknown };
+		installProbe(win, (e) => events.push(e));
+
+		win.plausible = (name: string) => {
+			if (name) win.console.warn('Ignoring Event: localStorage flag');
+		};
+		(win.plausible as (n: string, o: object) => void)('MapClick', { props: { zoom: 14 } });
+		win.console.warn('Ignoring Event: localStorage flag');
+
+		expect(events.map((e) => [e.name, e.props])).toEqual([
+			['MapClick', { zoom: 14 }],
+			[null, null]
+		]);
+		expect(warn).toHaveBeenCalledTimes(2);
+	});
+});
