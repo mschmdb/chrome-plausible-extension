@@ -186,15 +186,34 @@ test('clears the flag on the next visit when no tab was open', async ({
 	await expect.poll(() => eventCount(server, 'later.test', 0)).toBe(afterCleanup + 1);
 });
 
-test('leaves a flag alone that the extension did not set', async ({ site, options }) => {
+test('takes over a flag set by hand only when asked', async ({ site, options, sw }) => {
 	const page = await site('manual.test');
 	await page.evaluate(() => localStorage.setItem('plausible_ignore', 'true'));
+
+	// Without an explicit action, the flag stays.
+	await send(options, {
+		type: 'enable-site',
+		site: { host: 'other.test', includeSubdomains: false }
+	});
+	await send(options, { type: 'disable-site', host: 'other.test' });
+	expect(await flagOf(page)).toBe('true');
+
+	// Enabling the site hands the flag over. Disabling it removes the flag.
 	await send(options, {
 		type: 'enable-site',
 		site: { host: 'manual.test', includeSubdomains: false }
 	});
 	await send(options, { type: 'disable-site', host: 'manual.test' });
-	expect(await flagOf(page)).toBe('true');
+	expect(await flagOf(page)).toBeNull();
+
+	// A flag set by hand can be removed directly.
+	await page.evaluate(() => localStorage.setItem('plausible_ignore', 'true'));
+	const tabId = await sw.evaluate(
+		async (url) => (await chrome.tabs.query({ url }))[0]?.id,
+		page.url()
+	);
+	await send(options, { type: 'clear-flag', tabId });
+	expect(await flagOf(page)).toBeNull();
 });
 
 test('imports a site list from a file', async ({ options }) => {

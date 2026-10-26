@@ -24,7 +24,7 @@ This extension sets the flag at `document_start`, so the first pageview is skipp
   - Test mode: lifts the flag on a site until you stop it or close the tab
   - Event log: events Plausible sends or skips, with payload warnings
 - **Export and import** of the site list as JSON.
-- **Cleanup:** removing a site clears the flag it set, on open tabs right away and on other origins at your next visit. Flags you set by hand stay untouched.
+- **Cleanup:** removing a site clears the flag it set, on open tabs right away and on other origins at your next visit. A flag you set by hand stays untouched until you enable that site or remove it from the popup.
 
 ## Privacy
 

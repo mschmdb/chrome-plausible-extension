@@ -24,7 +24,7 @@ export const serial = createSerialQueue();
 
 /**
  * Sets or clears the flag in open tabs to match the current state. Only clears origins
- * the extension flagged itself, so flags set by hand stay untouched.
+ * the extension owns, so a flag set by hand stays until the user hands it over.
  */
 async function syncTabs(filter: (host: string) => boolean): Promise<void> {
 	const state = await store.loadState();
@@ -37,7 +37,8 @@ async function syncTabs(filter: (host: string) => boolean): Promise<void> {
 		pages.map(async ({ tabId, host, origin }) => {
 			if (shouldIgnoreHost(state, host)) {
 				const result = await setFlag(tabId, origin);
-				if (result && 'changed' in result && result.changed) set.push(origin);
+				// Enabled here, so the extension owns the flag, also one that was set by hand.
+				if (result && 'value' in result && result.value === 'true') set.push(origin);
 			} else if (flagged.has(origin) && !state.testHosts.includes(host)) {
 				const result = await clearFlag(tabId, origin);
 				if (result && 'value' in result && result.value === null) cleared.push(origin);
@@ -168,6 +169,17 @@ async function forgetLeftovers(): Promise<void> {
 	});
 }
 
+/** Removes a flag on the tab's origin, e.g. one set by hand. */
+async function clearTabFlag(tabId: number): Promise<void> {
+	const tab = await chrome.tabs.get(tabId);
+	if (!tab.url) throw new Error('This page cannot be changed.');
+	const origin = new URL(tab.url).origin;
+	const result = await clearFlag(tabId, origin);
+	if (!result || 'blocked' in result) throw new Error('The flag could not be removed.');
+	await store.updateFlaggedOrigins((origins) => void origins.delete(origin));
+	await refreshBadges([tabId]);
+}
+
 async function tabStatus(tabId: number): Promise<TabStatus> {
 	const tab = await chrome.tabs.get(tabId);
 	const state = await store.loadState();
@@ -220,6 +232,8 @@ export async function handleUiRequest(request: UiRequest): Promise<unknown> {
 			return serial(() => startTest(request.tabId));
 		case 'test-stop':
 			return serial(() => stopTest(request.host));
+		case 'clear-flag':
+			return serial(() => clearTabFlag(request.tabId));
 		case 'clear-events':
 			return serial(() => store.clearEvents(request.tabId));
 		case 'import-sites':

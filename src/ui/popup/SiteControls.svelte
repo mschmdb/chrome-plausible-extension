@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { isIpAddress } from '../../lib/host';
+	import { hasManualFlag } from '../../lib/manual-flag';
 	import type { TabStatus } from '../../lib/tab-status';
 	import { requestAndRun, send } from '../client';
 	import Notice from '../components/Notice.svelte';
@@ -43,6 +44,8 @@
 		);
 	}
 
+	const manualFlag = $derived(hasManualFlag(tab));
+
 	function grantAccess() {
 		if (site) run(() => requestAndRun({ type: 'enable-site', site }));
 	}
@@ -76,6 +79,28 @@
 			<button type="button" class="button" disabled={busy} onclick={grantAccess}>
 				Grant access
 			</button>
+		</Notice>
+	{/if}
+
+	{#if manualFlag}
+		<Notice>
+			<p>
+				The flag on this site was set by hand, for example with the console command from the
+				Plausible docs. The extension does not manage it.
+			</p>
+			<div class="actions">
+				<button type="button" class="button" disabled={busy} onclick={() => toggleSite(true)}>
+					Manage with this extension
+				</button>
+				<button
+					type="button"
+					class="button"
+					disabled={busy}
+					onclick={() => run(() => send({ type: 'clear-flag', tabId: tab.tabId }))}
+				>
+					Remove flag
+				</button>
+			</div>
 		</Notice>
 	{/if}
 
@@ -118,5 +143,11 @@
 
 	.button {
 		margin-top: var(--space-2);
+	}
+
+	.actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
 	}
 </style>

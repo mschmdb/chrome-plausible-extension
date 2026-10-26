@@ -28,6 +28,7 @@ export type UiRequest =
 	| { type: 'test-start'; tabId: number }
 	| { type: 'test-stop'; host: string }
 	| { type: 'clear-events'; tabId: number }
+	| { type: 'clear-flag'; tabId: number }
 	| { type: 'import-sites'; sites: Site[] }
 	| { type: 'pending-grant'; action: GrantAction };
 
@@ -92,6 +93,7 @@ export function isUiRequest(value: unknown): value is UiRequest {
 		case 'get-tab-status':
 		case 'test-start':
 		case 'clear-events':
+		case 'clear-flag':
 			return isTabId(value.tabId);
 		case 'enable-site':
 			return isSite(value.site);

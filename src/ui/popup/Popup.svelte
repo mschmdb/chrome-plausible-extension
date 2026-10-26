@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { Settings } from '@lucide/svelte';
+	import { hasManualFlag } from '../../lib/manual-flag';
 	import type { TabStatus } from '../../lib/tab-status';
 	import { activeTabId, send } from '../client';
 	import Notice from '../components/Notice.svelte';
@@ -68,7 +69,7 @@
 
 	{#if tab}
 		<div aria-live="polite">
-			<StatusCard status={tab.status} host={tab.host} />
+			<StatusCard status={tab.status} host={tab.host} manual={hasManualFlag(tab)} />
 		</div>
 
 		{#if tab.host}

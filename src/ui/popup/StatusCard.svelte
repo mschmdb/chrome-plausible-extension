@@ -6,9 +6,10 @@
 	interface Props {
 		status: PageStatus;
 		host: string | null;
+		manual?: boolean;
 	}
 
-	let { status, host }: Props = $props();
+	let { status, host, manual = false }: Props = $props();
 
 	const ICONS = {
 		ignored: CircleCheck,
@@ -31,7 +32,9 @@
 			<p class="host"><code>{host}</code></p>
 		{/if}
 		<h2 id="status-title">{text.title}</h2>
-		<p class="detail">{text.detail}</p>
+		<p class="detail">
+			{manual ? 'Plausible skips your visits because of a flag set by hand.' : text.detail}
+		</p>
 	</div>
 </section>
 
