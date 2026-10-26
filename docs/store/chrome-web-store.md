@@ -39,7 +39,7 @@ FOR DEVELOPERS
 PRIVACY
 • No data collection, no analytics, no remote requests
 • Host access only for sites you turn on, requested at that moment
-• Open source: https://github.com/mschmdb/chrome-plausible-extension
+• Open source: https://github.com/mschmdb/uncounted
 ```
 
 ## Category
@@ -83,11 +83,11 @@ The extension does not collect or transmit user data. Tick none of the data cate
 
 ## Privacy policy URL
 
-https://github.com/mschmdb/chrome-plausible-extension/blob/main/PRIVACY.md
+https://github.com/mschmdb/uncounted/blob/main/PRIVACY.md
 
 ## Homepage and support URL
 
-https://github.com/mschmdb/chrome-plausible-extension
+https://github.com/mschmdb/uncounted
 
 ## Package
 
