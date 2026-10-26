@@ -29,6 +29,8 @@ describe('event display', () => {
 	it('decodes the full URL for the details', () => {
 		expect(decodedUrl(event().url)).toBe('https://a.test/explore?q=Zionskirchstraße, Berlin');
 		expect(decodedUrl('https://a.test/%E0%A4%A')).toBe('https://a.test/%E0%A4%A');
+		expect(decodedUrl('https://a.test/C++?q=a+b#x+y')).toBe('https://a.test/C++?q=a b#x+y');
+		expect(decodedUrl('not a url')).toBe('not a url');
 	});
 
 	it.each([

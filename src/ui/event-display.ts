@@ -9,13 +9,24 @@ export function shortPath(url: string): string {
 	}
 }
 
-/** Full URL with percent-encoding and `+` spaces decoded, for reading. */
-export function decodedUrl(url: string): string {
+function safeDecode(value: string): string {
 	try {
-		return decodeURIComponent(url.replace(/\+/g, ' '));
+		return decodeURIComponent(value);
+	} catch {
+		return value;
+	}
+}
+
+/** Full URL with percent-encoding decoded for reading. `+` means a space only in the query. */
+export function decodedUrl(url: string): string {
+	let parsed: URL;
+	try {
+		parsed = new URL(url);
 	} catch {
 		return url;
 	}
+	const query = parsed.search ? safeDecode(parsed.search.replace(/\+/g, ' ')) : '';
+	return `${parsed.origin}${safeDecode(parsed.pathname)}${query}${safeDecode(parsed.hash)}`;
 }
 
 export function outcomeChip(event: CapturedEvent): string {
