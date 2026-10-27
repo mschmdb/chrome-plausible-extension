@@ -1,5 +1,7 @@
 # Chrome Web Store listing
 
+Live since 2026-10-27: https://chromewebstore.google.com/detail/uncounted/aimdpeklboeknlfhpliiijgbhegioped
+
 Everything to paste into the developer dashboard. Assets live in [assets/](assets/) and are generated with `node scripts/build.mjs --e2e && node scripts/store-assets.mjs`.
 
 ## Name
